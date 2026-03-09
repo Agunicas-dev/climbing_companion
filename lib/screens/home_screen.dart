@@ -1,3 +1,4 @@
+import 'package:climbing_companion/components/clock.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,7 +13,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return  Column(
       children: [
-        Expanded(child: Placeholder())
+        SessionClock(),
       ],
     );
   }
