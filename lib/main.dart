@@ -1,15 +1,26 @@
+import 'package:climbing_companion/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
-class SessionClock extends StatefulWidget {
-  const SessionClock({super.key});
-
-  @override
-  State<SessionClock> createState() => _SessionClockState();
+void main() {
+  runApp(const MainApp());
 }
 
-class _SessionClockState extends State<SessionClock> {
+class MainApp extends StatefulWidget {
+  const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  int currentPageIndex = 0;
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return MaterialApp(
+      home: Scaffold(
+        body: const HomeScreen(),
+      ),
+    );
   }
 }
