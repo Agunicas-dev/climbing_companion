@@ -16,7 +16,12 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Log a new session')),
+      appBar: AppBar(
+        title: const Text('Log a new session', style: TextStyle(fontWeight: FontWeight.bold)),
+        shadowColor: Colors.black,
+        elevation: 3,
+        
+      ),
       body: Column(
         children: [
           SessionClock(
