@@ -5,7 +5,8 @@ class ProfileCard extends StatelessWidget {
   final String profilePictureUrl;
 
   const ProfileCard({super.key, required this.username, required this.profilePictureUrl});
-
+  //TODO: Add a gesture detector to the card to allow the user to tap on it and go to the profile screen.
+  //Will need to create a profile screen, wich will be generated on the fly from the info shown in the card.
   @override
   Widget build(BuildContext context) {
     return Card(

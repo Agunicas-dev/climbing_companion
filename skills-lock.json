@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "flutter-chart": {
+      "source": "entronad/graphic",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-chart/SKILL.md",
+      "computedHash": "4e0bd17119dbcc9dca25279bbb392327790113125d52b5dca8578aadca8330d7"
+    }
+  }
+}
