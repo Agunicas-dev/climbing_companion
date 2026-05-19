@@ -1,17 +1,18 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 class SessionClock extends StatefulWidget {
   final ValueChanged<String>? onTimeChanged;
+  final VoidCallback? onStop;
 
-  const SessionClock({super.key, this.onTimeChanged});
+
+  const SessionClock({super.key, this.onTimeChanged, this.onStop});
 
   @override
-  State<SessionClock> createState() => _SessionClockState();
+  State<SessionClock> createState() => SessionClockState();
 }
 
-class _SessionClockState extends State<SessionClock> {
+class SessionClockState extends State<SessionClock> {
   //Define a Stopwatch to make the clock work, and a Timer to update the UI every second.
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _timer;
@@ -47,15 +48,25 @@ class _SessionClockState extends State<SessionClock> {
     }
   }
 
-  //Method to stop the stopwatch, reset it, and cancel the timer.
+
+  //Method to stop the stopwatch and cancel the timer.
   void _stopStopwatch() {
-    _stopwatch.stop();
+    if (_stopwatch.isRunning) {
+      _stopwatch.stop();
+    }
+    _timer?.cancel();
+    _timer = null;
+    widget.onTimeChanged?.call(_formattedTime);
+    widget.onStop?.call();
+    setState(() {});
+  }
+
+  void resetStopwatch() {
     _stopwatch.reset();
     _timer?.cancel();
     _timer = null;
-    setState(() {
-      widget.onTimeChanged?.call(_formattedTime);
-    });
+    widget.onTimeChanged?.call(_formattedTime);
+    setState(() {});
   }
 
   //Boolean getter to check if the stopwatch is at zero.
@@ -69,6 +80,7 @@ class _SessionClockState extends State<SessionClock> {
     final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$hours:$minutes:$seconds';
   }
+  
 
   @override
   Widget build(BuildContext context) {

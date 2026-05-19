@@ -29,6 +29,7 @@ class SettingsScreen extends StatelessWidget {
             -Preferences (Grading system, units, language, notifications)
             -Appearance (Theme, font size, color scheme)
             */
+            
           ],      
       ),
     );

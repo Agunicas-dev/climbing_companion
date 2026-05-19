@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 
-class ClimbLogCard extends StatefulWidget {
+class ClimbLogCard extends StatelessWidget {
   final String time;
   final VoidCallback? onDelete;
+  final String? selectedGrade;
+  final String? selectedCompletion;
+  final ValueChanged<String?>? onGradeChanged;
+  final ValueChanged<String?>? onCompletionChanged;
 
-  const ClimbLogCard({super.key, required this.time, this.onDelete});
+  const ClimbLogCard({
+    super.key,
+    required this.time,
+    this.onDelete,
+    this.selectedGrade,
+    this.selectedCompletion,
+    this.onGradeChanged,
+    this.onCompletionChanged,
+  });
 
-  @override
-  State<ClimbLogCard> createState() => _ClimbLogCardState();
-}
-
-class _ClimbLogCardState extends State<ClimbLogCard> {
-  String? selectedGrade;
-  String? selectedCompletion;
-
-  final List<String> grades = [
+  static const List<String> grades = [
     'V0',
     'V1',
     'V2',
@@ -27,7 +31,7 @@ class _ClimbLogCardState extends State<ClimbLogCard> {
     'V9',
     'V10',
   ];
-  final List<String> completions = ['Sent', 'Failed', 'Flash'];
+  static const List<String> completions = ['Sent', 'Failed', 'Flash'];
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +44,7 @@ class _ClimbLogCardState extends State<ClimbLogCard> {
             children: [
               Expanded(
                 child: Text(
-                  widget.time,
+                  time,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -56,11 +60,7 @@ class _ClimbLogCardState extends State<ClimbLogCard> {
                     child: Text(value),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedGrade = newValue;
-                  });
-                },
+                onChanged: onGradeChanged,
               ),
               const SizedBox(width: 8),
               DropdownButton<String>(
@@ -72,16 +72,12 @@ class _ClimbLogCardState extends State<ClimbLogCard> {
                     child: Text(value),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedCompletion = newValue;
-                  });
-                },
+                onChanged: onCompletionChanged,
               ),
               const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: widget.onDelete,
+                onPressed: onDelete,
               ),
             ],
           ),
