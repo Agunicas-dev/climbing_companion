@@ -6,6 +6,7 @@ import '../models/session.dart';
 class LogsScreen extends StatelessWidget {
   const LogsScreen({super.key});
 
+  //Formatting for the date in order to make it readable.
   String _formatSessionDate(DateTime date) {
     final local = date.toLocal();
     final year = local.year.toString().padLeft(4, '0');
@@ -25,23 +26,30 @@ class LogsScreen extends StatelessWidget {
         shadowColor: Colors.black,
         elevation: 3,
       ),
+
+      //Using FutureBuilder to load sessions from Isar and display them in a ListView.
       body: FutureBuilder<List<Session>>(
         future: IsarService.getAllSessions(),
         builder: (context, snapshot) {
+
+          //Show loading indicator when waiting for the data to load.
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          //Error handling if something goes wrong while loading sessions from Isar.
           if (snapshot.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text('Error loading sessions: ${snapshot.error}'),
+                child: Text('Error loading sessions: ${snapshot.error}'),//Show the error.
               ),
             );
           }
 
+          //Load the sessions into a collection.
           final sessions = snapshot.data ?? [];
+          //Display a message if there are no saved sessions yet.
           if (sessions.isEmpty) {
             return const Center(
               child: Padding(
@@ -51,10 +59,15 @@ class LogsScreen extends StatelessWidget {
             );
           }
 
+          //Listview for the sessions, showing the date, total time, and number of climbs for each session.
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+
+            //Separator between list items.
             itemCount: sessions.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+
+            //Building each item in the collection as a card with the session info.
             itemBuilder: (context, index) {
               final session = sessions[index];
               return Card(
@@ -62,16 +75,16 @@ class LogsScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: ListTile(
+                child: ListTile(//Widget for displaying the session info in a structured way.
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
                     horizontal: 16,
                   ),
-                  title: Text(_formatSessionDate(session.date)),
+                  title: Text(_formatSessionDate(session.date)),//Title with the date.
                   subtitle: Text(
-                    'Total time: ${session.totalTime}\nClimbs: ${session.climbs.length}',
+                    'Total time: ${session.totalTime}\nClimbs: ${session.climbs.length}',//Subtitle with the time and number of climbs.
                   ),
-                  trailing: Text('#${session.id}'),
+                  //trailing: Text('#${session.id}'),
                   isThreeLine: true,
                 ),
               );

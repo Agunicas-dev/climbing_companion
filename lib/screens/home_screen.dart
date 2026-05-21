@@ -1,5 +1,6 @@
 import 'package:climbing_companion/components/profile_card.dart';
 import 'package:climbing_companion/screens/settings_screen.dart';
+import 'package:climbing_companion/services/settings_service.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,6 +11,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _username = 'Climber';
+  String _profilePicturePath = '';
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final s = await SettingsService.loadSettings();
+    if (mounted) {
+      setState(() {
+        _username = s.username.isNotEmpty ? s.username : 'Climber';
+        _profilePicturePath = s.profilePicturePath;
+        _loading = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           ProfileCard(
-            username: "Fugu",
+            username: _loading ? 'Loading...' : _username,
+            profilePicturePath: _profilePicturePath,
             profilePictureUrl:
                 "https://img.freepik.com/vector-premium/cute-fugu-puffer-fish-personaje-dibujos-animados-graficos-vectoriales-premium-estilo-pegatinas_324746-1016.jpg",
           ),

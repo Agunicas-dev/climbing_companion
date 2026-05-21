@@ -1,11 +1,17 @@
 import 'package:climbing_companion/screens/home_screen.dart';
 import 'package:climbing_companion/screens/logs_screen.dart';
 import 'package:climbing_companion/screens/session_log_screen.dart';
+import 'package:climbing_companion/services/settings_service.dart';
+import 'package:climbing_companion/services/theme_service.dart';
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MainApp());
 }
+
+// Global notifier to trigger theme/font changes from anywhere
+final themeNotifier = ValueNotifier<String>('system');
+final fontSizeNotifier = ValueNotifier<String>('medium');
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -15,18 +21,16 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  late ThemeData _theme;
+  bool _themeLoaded = false;
   int currentPageIndex = 0;
+  late final PageController _pageController;
 
-  //Defining a PageController in order to be able to 
-  final PageController _pageController = PageController(initialPage: 0);
-
-//List of screens to be used in the PageView and BottomNavigationBar.
   static const List<Widget> screens = [
     HomeScreen(),
     LogsScreen(),
   ];
 
-//Items for the NavBar, allowing the user to switch between the different screens.
   static const List<BottomNavigationBarItem> navItems = [
     BottomNavigationBarItem(
       icon: Icon(Icons.home),
@@ -37,11 +41,41 @@ class _MainAppState extends State<MainApp> {
       label: 'Logs',
     ),
   ];
-  
 
-//Disposal of the page controller to make the app more efficient.
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _loadTheme();
+    themeNotifier.addListener(_onThemeChanged);
+    fontSizeNotifier.addListener(_onThemeChanged);
+  }
+
+  Future<void> _loadTheme() async {
+    final settings = await SettingsService.loadSettings();
+    _theme = await ThemeService.buildTheme(settings.theme, settings.fontSize);
+    themeNotifier.value = settings.theme;
+    fontSizeNotifier.value = settings.fontSize;
+    if (mounted) {
+      setState(() {
+        _themeLoaded = true;
+      });
+    }
+  }
+
+  Future<void> _onThemeChanged() async {
+    final theme = await ThemeService.buildTheme(themeNotifier.value, fontSizeNotifier.value);
+    if (mounted) {
+      setState(() {
+        _theme = theme;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    themeNotifier.removeListener(_onThemeChanged);
+    fontSizeNotifier.removeListener(_onThemeChanged);
     _pageController.dispose();
     super.dispose();
   }
@@ -55,13 +89,22 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_themeLoaded) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
+      theme: _theme,
       home: Builder(
         builder: (context) => Scaffold(
-          //add pageview to the scaffold body.
           body: SafeArea(
             child: PageView(
-              //adding the controller to manage the page view.
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (index) {
@@ -72,19 +115,13 @@ class _MainAppState extends State<MainApp> {
               children: screens,
             ),
           ),
-
-          //Adding the bottom NavBar
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: currentPageIndex,
             items: navItems,
-
-            //actions on tap of a nav item.
             onTap: (index) {
               setState(() {
                 currentPageIndex = index;
               });
-
-              //Animate the page change to make it slide smoothly between screens.
               _pageController.animateToPage(
                 index,
                 duration: const Duration(milliseconds: 200),
@@ -92,7 +129,6 @@ class _MainAppState extends State<MainApp> {
               );
             },
           ),
-
           floatingActionButton: FloatingActionButton(
             onPressed: () => logNewSession(context),
             child: const Icon(Icons.add),

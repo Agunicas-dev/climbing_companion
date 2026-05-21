@@ -1,5 +1,7 @@
 /*This screen will be used to review a climbing log session entry.
-It will offer decently detailed info about the */
+It will offer decently detailed info about the climbing session and the option to delete it.
+It will show the recorded database info, a chart with the climbing performance data, and a
+short */
 
 import 'package:flutter/material.dart';
 

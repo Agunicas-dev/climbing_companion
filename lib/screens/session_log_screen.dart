@@ -13,9 +13,11 @@ class SessionLogScreen extends StatefulWidget {
 }
 
 class _SessionLogScreenState extends State<SessionLogScreen> {
+  //Defining GlobalKeys for the clock and climb list in order to be able to access their state and methods from this screen.
   final GlobalKey<SessionClockState> _clockKey = GlobalKey<SessionClockState>();
   final GlobalKey<ClimbListSessionState> _climbListKey = GlobalKey<ClimbListSessionState>();
 
+  //Variable to store the stopwatch time.
   String _currentStopwatchTime = '00:00:00';
 
   @override
@@ -29,8 +31,10 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
         shadowColor: Colors.black,
         elevation: 3,
       ),
+
       body: Column(
         children: [
+          //Add the Clock widget and handling the time changes and when the clock stops.
           SessionClock(
             key: _clockKey,
             onStop: _onClockStop,
@@ -40,7 +44,10 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
               });
             },
           ),
+
           const Divider(),
+
+          //Add the Climb List widget and providing the current stopwatch time to it in order to be able to add climbs with the correct time. Also, using a GlobalKey to be able to access the climb list state and methods from this screen.
           ClimbListSession(
             key: _climbListKey,
             currentTimeProvider: () => _currentStopwatchTime,
@@ -50,6 +57,7 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
     );
   }
 
+  //Function to handle when the clock stops, showing a bottom sheet with the options to reset the session, or save and exit.
   void _onClockStop() {
     showModalBottomSheet(
       context: context,
@@ -59,6 +67,7 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              //Button to reset the session, which will reset the clock and clear the climb list.
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -70,14 +79,10 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
                 ),
               ),
 
-              /*ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  // TODO: open manual add climb UI.
-                },
-                child: const Text('Manual Add'),
-              ),*/
+                /*TODO: Add an "Add manually" button that will allow the user to add a climb manually
+                in case they forgot to add it during the session.*/
 
+              //Button to save and exit, which will save the session to Isar and then pop the screen.
               ElevatedButton(
                 onPressed: () async {
                   Navigator.of(context).pop();

@@ -2,6 +2,7 @@
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/home/fugu/flutter"
 export "FLUTTER_APPLICATION_PATH=/home/fugu/Documentos/climbing_companion"
+export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=/home/fugu/Documentos/climbing_companion/macos/Flutter/ephemeral/Packages/.packages/FlutterFramework"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=0.1.0"

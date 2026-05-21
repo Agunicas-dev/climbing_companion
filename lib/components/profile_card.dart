@@ -1,12 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProfileCard extends StatelessWidget {
   final String username;
   final String profilePictureUrl;
+  final String? profilePicturePath;
 
-  const ProfileCard({super.key, required this.username, required this.profilePictureUrl});
-  //TODO: Add a gesture detector to the card to allow the user to tap on it and go to the profile screen.
-  //Will need to create a profile screen, wich will be generated on the fly from the info shown in the card.
+  const ProfileCard({
+    super.key,
+    required this.username,
+    required this.profilePictureUrl,
+    this.profilePicturePath,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -20,15 +26,21 @@ class ProfileCard extends StatelessWidget {
             child: Expanded(
               child: CircleAvatar(
                 radius: 40,
-                backgroundImage: NetworkImage(profilePictureUrl),
+                backgroundImage: profilePicturePath != null && profilePicturePath!.isNotEmpty
+                    ? FileImage(File(profilePicturePath!)) as ImageProvider
+                    : NetworkImage(profilePictureUrl),
               ),
             ),
           ),
           VerticalDivider(width: 16),
-          Column( mainAxisAlignment: MainAxisAlignment.start,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(username, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.start,),
+              Text(
+                username,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.start,
+              ),
             ],
           ),
         ],

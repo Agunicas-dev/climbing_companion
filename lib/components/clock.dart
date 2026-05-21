@@ -84,6 +84,10 @@ class SessionClockState extends State<SessionClock> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.grey[800] : Colors.grey[300];
+    final textColor = isDark ? Colors.grey[100] : Colors.grey[900];
+
     return Row(
       children: [
         Expanded(
@@ -92,7 +96,7 @@ class SessionClockState extends State<SessionClock> {
             padding: const EdgeInsets.all(16),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
+                border: Border.all(color: isDark ? Colors.grey[600]! : Colors.grey),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
@@ -105,15 +109,16 @@ class SessionClockState extends State<SessionClock> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey[300],
+                          color: backgroundColor,
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             _formattedTime,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.bold,
+                              color: textColor,
                             ),
                             textAlign: TextAlign.center,
                           ),
