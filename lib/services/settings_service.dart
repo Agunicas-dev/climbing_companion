@@ -12,6 +12,7 @@ class SettingsService {
   static const _keyNotifications = 'settings_notifications';
   static const _keyTheme = 'settings_theme';
   static const _keyFontSize = 'settings_font_size';
+  static const _keySeedColor = 'settings_seed_color';
 
   static Future<Settings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -26,6 +27,7 @@ class SettingsService {
       notifications: prefs.getBool(_keyNotifications) ?? true,
       theme: prefs.getString(_keyTheme) ?? 'system',
       fontSize: prefs.getString(_keyFontSize) ?? 'medium',
+      seedColor: prefs.getString(_keySeedColor) ?? '#81D4FA',
     );
   }
 
@@ -41,5 +43,6 @@ class SettingsService {
     await prefs.setBool(_keyNotifications, s.notifications);
     await prefs.setString(_keyTheme, s.theme);
     await prefs.setString(_keyFontSize, s.fontSize);
+    await prefs.setString(_keySeedColor, s.seedColor);
   }
 }

@@ -9,6 +9,7 @@ class Settings {
   bool notifications;
   String theme; // 'system','light','dark'
   String fontSize; // 'small','medium','large'
+  String seedColor; // hex color string for theme seed color
 
   Settings({
     this.username = '',
@@ -21,6 +22,7 @@ class Settings {
     this.notifications = true,
     this.theme = 'system',
     this.fontSize = 'medium',
+    this.seedColor = '#81D4FA',
   });
 
   Map<String, Object> toMap() {
@@ -35,6 +37,7 @@ class Settings {
       'notifications': notifications,
       'theme': theme,
       'fontSize': fontSize,
+      'seedColor': seedColor,
     };
   }
 
@@ -50,6 +53,7 @@ class Settings {
       notifications: (map['notifications'] as bool?) ?? true,
       theme: (map['theme'] as String?) ?? 'system',
       fontSize: (map['fontSize'] as String?) ?? 'medium',
+      seedColor: (map['seedColor'] as String?) ?? '#81D4FA',
     );
   }
 }

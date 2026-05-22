@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../main.dart';
 import '../models/settings.dart';
 import '../services/settings_service.dart';
+import '../services/theme_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -47,15 +49,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _settings.location = _locationCtrl.text;
     await SettingsService.saveSettings(_settings);
 
-    // Notify theme and font size changes
+    // Notify theme, font size, and seed color changes
     themeNotifier.value = _settings.theme;
     fontSizeNotifier.value = _settings.fontSize;
+    seedColorNotifier.value = _settings.seedColor;
 
     setState(() {
       _loading = false;
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+    }
+  }
+
+  Future<void> _pickSeedColor() async {
+    Color selectedColor = ThemeService.seedColorFromHex(_settings.seedColor);
+
+    final picked = await showDialog<Color>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Choose theme color'),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (color) {
+                selectedColor = color;
+              },
+              labelTypes: [ColorLabelType.hex],
+              enableAlpha: false,
+              pickerAreaHeightPercent: 0.7,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(selectedColor),
+              child: const Text('Select'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _settings.seedColor = ThemeService.colorToHex(picked);
+      });
     }
   }
 
@@ -213,6 +256,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                     onChanged: (v) => setState(() => _settings.theme = v ?? _settings.theme),
                     decoration: const InputDecoration(labelText: 'Theme'),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _pickSeedColor,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Theme Color', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                              const SizedBox(height: 2),
+                              Text(_settings.seedColor, style: const TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: ThemeService.seedColorFromHex(_settings.seedColor),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(

@@ -61,6 +61,7 @@ class SessionClockState extends State<SessionClock> {
     setState(() {});
   }
 
+  //Method to reset the stopwatch and cancel the timer.
   void resetStopwatch() {
     _stopwatch.reset();
     _timer?.cancel();
@@ -84,6 +85,7 @@ class SessionClockState extends State<SessionClock> {
 
   @override
   Widget build(BuildContext context) {
+    //Define the colors for the clock and the buttons based on the current theme (dark or light).
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.grey[800] : Colors.grey[300];
     final textColor = isDark ? Colors.grey[100] : Colors.grey[900];
@@ -103,6 +105,8 @@ class SessionClockState extends State<SessionClock> {
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
+
+                    //Part of the widget wich contains the clock.
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: Container(
@@ -114,7 +118,7 @@ class SessionClockState extends State<SessionClock> {
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            _formattedTime,
+                            _formattedTime, //Show the time in the center of the container.
                             style: TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.bold,
@@ -125,11 +129,15 @@ class SessionClockState extends State<SessionClock> {
                         ),
                       ),
                     ),
+
+                    //Part of the widget wich contains the buttons that control the clock
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+
+                          //Start button.
                           IconButton.filled(
                             onPressed: _stopwatch.isRunning
                                 ? null
@@ -137,7 +145,11 @@ class SessionClockState extends State<SessionClock> {
                             icon: const Icon(Icons.play_arrow),
                             iconSize: 35,
                           ),
+
+                          
                           const SizedBox(width: 20),
+                          
+                          //Pause button.
                           IconButton.filled(
                             onPressed: (_isAtZero || !_stopwatch.isRunning)
                                 ? null
@@ -145,7 +157,10 @@ class SessionClockState extends State<SessionClock> {
                             icon: const Icon(Icons.pause),
                             iconSize: 35,
                           ),
-                          const SizedBox(width: 16),
+
+                          const SizedBox(width: 20),
+
+                          //Stop button.
                           IconButton.filled(
                             onPressed: _isAtZero ? null : _stopStopwatch,
                             icon: const Icon(Icons.stop),

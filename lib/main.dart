@@ -12,6 +12,7 @@ void main() {
 // Global notifier to trigger theme/font changes from anywhere
 final themeNotifier = ValueNotifier<String>('system');
 final fontSizeNotifier = ValueNotifier<String>('medium');
+final seedColorNotifier = ValueNotifier<String>('#81D4FA');
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -21,10 +22,13 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  late ThemeData _theme;
+  late ThemeData _lightTheme;
+  late ThemeData _darkTheme;
+  ThemeMode _themeMode = ThemeMode.system;
   bool _themeLoaded = false;
   int currentPageIndex = 0;
   late final PageController _pageController;
+  late String _seedColor;
 
   static const List<Widget> screens = [
     HomeScreen(),
@@ -49,13 +53,19 @@ class _MainAppState extends State<MainApp> {
     _loadTheme();
     themeNotifier.addListener(_onThemeChanged);
     fontSizeNotifier.addListener(_onThemeChanged);
+    seedColorNotifier.addListener(_onThemeChanged);
   }
 
   Future<void> _loadTheme() async {
     final settings = await SettingsService.loadSettings();
-    _theme = await ThemeService.buildTheme(settings.theme, settings.fontSize);
+    _seedColor = settings.seedColor;
+    final seedColor = ThemeService.seedColorFromHex(_seedColor);
+    _lightTheme = ThemeService.buildTheme(Brightness.light, settings.fontSize, seedColor);
+    _darkTheme = ThemeService.buildTheme(Brightness.dark, settings.fontSize, seedColor);
+    _themeMode = ThemeService.themeModeFromString(settings.theme);
     themeNotifier.value = settings.theme;
     fontSizeNotifier.value = settings.fontSize;
+    seedColorNotifier.value = settings.seedColor;
     if (mounted) {
       setState(() {
         _themeLoaded = true;
@@ -63,12 +73,14 @@ class _MainAppState extends State<MainApp> {
     }
   }
 
-  Future<void> _onThemeChanged() async {
-    final theme = await ThemeService.buildTheme(themeNotifier.value, fontSizeNotifier.value);
+  void _onThemeChanged() {
+    _seedColor = seedColorNotifier.value;
+    final seedColor = ThemeService.seedColorFromHex(_seedColor);
+    _lightTheme = ThemeService.buildTheme(Brightness.light, fontSizeNotifier.value, seedColor);
+    _darkTheme = ThemeService.buildTheme(Brightness.dark, fontSizeNotifier.value, seedColor);
+    _themeMode = ThemeService.themeModeFromString(themeNotifier.value);
     if (mounted) {
-      setState(() {
-        _theme = theme;
-      });
+      setState(() {});
     }
   }
 
@@ -100,7 +112,9 @@ class _MainAppState extends State<MainApp> {
     }
 
     return MaterialApp(
-      theme: _theme,
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
+      themeMode: _themeMode,
       home: Builder(
         builder: (context) => Scaffold(
           body: SafeArea(
@@ -131,6 +145,7 @@ class _MainAppState extends State<MainApp> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () => logNewSession(context),
+            shape: const CircleBorder(),
             child: const Icon(Icons.add),
           ),
         ),

@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
 
+//Basic theme definition.
 class ThemeService {
-  static Future<ThemeData> buildTheme(String themeName, String fontSize) async {
-    final isDark = themeName == 'dark';
-    final isLight = themeName == 'light';
-    
-    final brightness = (!isDark && !isLight)
-        ? Brightness.light // Default to light if 'system'
-        : isDark
-            ? Brightness.dark
-            : Brightness.light;
-
+  static ThemeData buildTheme(Brightness brightness, String fontSize, Color seedColor) {
     // Font size multiplier
     final fontSizeMultiplier = fontSize == 'small'
         ? 0.85
@@ -22,7 +14,7 @@ class ThemeService {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
+        seedColor: seedColor,
         brightness: brightness,
       ),
       textTheme: TextTheme(
@@ -65,5 +57,37 @@ class ThemeService {
         ),
       ),
     );
+  }
+
+  static ThemeMode themeModeFromString(String themeName) {
+    switch (themeName) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  static Color seedColorFromHex(String hexColor) {
+    final buffer = StringBuffer();
+    var value = hexColor.trim();
+    if (value.startsWith('#')) {
+      value = value.substring(1);
+    }
+    if (value.length == 6) {
+      buffer.write('ff');
+    }
+    buffer.write(value);
+    return Color(int.parse(buffer.toString(), radix: 16));
+  }
+
+  static String colorToHex(Color color) {
+    final value = color.toARGB32();
+    final r = ((value >> 16) & 0xFF).toRadixString(16).padLeft(2, '0');
+    final g = ((value >> 8) & 0xFF).toRadixString(16).padLeft(2, '0');
+    final b = (value & 0xFF).toRadixString(16).padLeft(2, '0');
+    return '#${r.toUpperCase()}${g.toUpperCase()}${b.toUpperCase()}';
   }
 }

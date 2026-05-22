@@ -67,6 +67,7 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+
               //Button to reset the session, which will reset the clock and clear the climb list.
               ElevatedButton(
                 onPressed: () {
@@ -78,9 +79,11 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
                   child: const Text('Reset', style: TextStyle(fontSize: 22),),
                 ),
               ),
+              
 
                 /*TODO: Add an "Add manually" button that will allow the user to add a climb manually
                 in case they forgot to add it during the session.*/
+
 
               //Button to save and exit, which will save the session to Isar and then pop the screen.
               ElevatedButton(
@@ -110,6 +113,7 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
     );
   }
 
+  //Reset the session when the user clicks the reset button in the BottomModalForm.
   void _resetSession() {
     _clockKey.currentState?.resetStopwatch();
     _climbListKey.currentState?.clearClimbs();

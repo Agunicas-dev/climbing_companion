@@ -2,6 +2,7 @@ import 'package:climbing_companion/services/isar_service.dart';
 import 'package:flutter/material.dart';
 
 import '../models/session.dart';
+import 'climbing_log_screen.dart';
 
 class LogsScreen extends StatelessWidget {
   const LogsScreen({super.key});
@@ -75,17 +76,24 @@ class LogsScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: ListTile(//Widget for displaying the session info in a structured way.
+                child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
                     horizontal: 16,
                   ),
-                  title: Text(_formatSessionDate(session.date)),//Title with the date.
+                  title: Text(_formatSessionDate(session.date)),
                   subtitle: Text(
-                    'Total time: ${session.totalTime}\nClimbs: ${session.climbs.length}',//Subtitle with the time and number of climbs.
+                    'Total time: ${session.totalTime}\nClimbs: ${session.climbs.length}',
                   ),
-                  //trailing: Text('#${session.id}'),
                   isThreeLine: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ClimbingLog(session: session),
+                      ),
+                    );
+                  },
                 ),
               );
             },
