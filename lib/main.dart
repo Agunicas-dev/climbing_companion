@@ -46,6 +46,7 @@ class _MainAppState extends State<MainApp> {
     ),
   ];
 
+  // Initialize the theme and page controller, and set up listeners for theme changes.
   @override
   void initState() {
     super.initState();
@@ -73,6 +74,7 @@ class _MainAppState extends State<MainApp> {
     }
   }
 
+  //Handling theme changes by rebuilding the light and dark themes based on the new settings and updating the theme mode.
   void _onThemeChanged() {
     _seedColor = seedColorNotifier.value;
     final seedColor = ThemeService.seedColorFromHex(_seedColor);
@@ -84,6 +86,7 @@ class _MainAppState extends State<MainApp> {
     }
   }
 
+  // Remove listeners and dispose of the page controller when the widget is removed from the widget tree to prevent memory leaks and ensure proper cleanup of resources.
   @override
   void dispose() {
     themeNotifier.removeListener(_onThemeChanged);
@@ -91,6 +94,7 @@ class _MainAppState extends State<MainApp> {
     _pageController.dispose();
     super.dispose();
   }
+
 
   void logNewSession(BuildContext context) {
     Navigator.push(
@@ -101,6 +105,8 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+
+    //If the theme is still loading, show a loading indicator.
     if (!_themeLoaded) {
       return MaterialApp(
         home: Scaffold(
@@ -112,9 +118,11 @@ class _MainAppState extends State<MainApp> {
     }
 
     return MaterialApp(
+      //Theme data.
       theme: _lightTheme,
       darkTheme: _darkTheme,
       themeMode: _themeMode,
+
       home: Builder(
         builder: (context) => Scaffold(
           body: SafeArea(
@@ -129,6 +137,8 @@ class _MainAppState extends State<MainApp> {
               children: screens,
             ),
           ),
+
+          //Navigation bar for changing between home and logs screens.
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: currentPageIndex,
             items: navItems,
@@ -143,6 +153,8 @@ class _MainAppState extends State<MainApp> {
               );
             },
           ),
+
+          //Floating action button used to start a new climbing session.
           floatingActionButton: FloatingActionButton(
             onPressed: () => logNewSession(context),
             shape: const CircleBorder(),

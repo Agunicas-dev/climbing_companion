@@ -19,16 +19,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late Settings _settings;
   bool _loading = true;
 
+  //Controllers for the text fields
   final _usernameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
 
+  //Load settings on app start and populate controllers with existing values. 
   @override
   void initState() {
     super.initState();
     _load();
   }
 
+  //Function to load settings from storage and update the UI accordingly.
   Future<void> _load() async {
     final s = await SettingsService.loadSettings();
     setState(() {
@@ -40,6 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  //Function to save settings to storage and update the app's theme, font size, and theme color based on user preferences.
   Future<void> _save() async {
     setState(() {
       _loading = true;
@@ -62,12 +66,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+
+  //Function to open a color picker dialog and allow the user to select a new theme color.
   Future<void> _pickSeedColor() async {
     Color selectedColor = ThemeService.seedColorFromHex(_settings.seedColor);
 
     final picked = await showDialog<Color>(
       context: context,
       builder: (context) {
+        // Use AlertDialog to show the color picker
         return AlertDialog(
           title: const Text('Choose theme color'),
           content: SingleChildScrollView(
@@ -95,6 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
 
+    // If a color was picked, update the settings with the new color in hex format.
     if (picked != null) {
       setState(() {
         _settings.seedColor = ThemeService.colorToHex(picked);
@@ -102,11 +110,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //Function to allow the user to pick an image from their gallery and save it as their profile picture in the app's documents directory.
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       try {
+
         // Get app documents directory
         final appDir = await getApplicationDocumentsDirectory();
         final imagesDir = Directory('${appDir.path}/assets/images');
@@ -121,16 +131,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final sourceFile = File(image.path);
         await sourceFile.copy(profileImagePath);
 
+        //Update settings with new profile picture path and show success message.
         setState(() {
           _settings.profilePicturePath = profileImagePath;
         });
 
+        //Show a success message to the user after successfully saving the profile picture.
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile picture updated')),
           );
         }
       } catch (e) {
+        //Show an error message to the user if there was an issue saving the profile picture.
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error saving image: $e')),
@@ -140,6 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //Dispose of the text controllers when the widget is removed from the widget tree to free up resources and prevent memory leaks.
   @override
   void dispose() {
     _usernameCtrl.dispose();
@@ -163,8 +177,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shadowColor: Colors.black,
         elevation: 3,
       ),
+
+      //Call to the _loading variable to determine whether to show a loading indicator or the settings form.
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator()) //If the page is still loading, show a circular progress indicator in the center of the screen.
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
