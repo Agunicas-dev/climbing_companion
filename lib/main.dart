@@ -1,3 +1,5 @@
+import 'package:climbing_companion/components/session_type_dialog.dart';
+import 'package:climbing_companion/models/session_type.dart';
 import 'package:climbing_companion/screens/home_screen.dart';
 import 'package:climbing_companion/screens/logs_screen.dart';
 import 'package:climbing_companion/screens/session_log_screen.dart';
@@ -30,20 +32,11 @@ class _MainAppState extends State<MainApp> {
   late final PageController _pageController;
   late String _seedColor;
 
-  static const List<Widget> screens = [
-    HomeScreen(),
-    LogsScreen(),
-  ];
+  static const List<Widget> screens = [HomeScreen(), LogsScreen()];
 
   static const List<BottomNavigationBarItem> navItems = [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.list),
-      label: 'Logs',
-    ),
+    BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+    BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Logs'),
   ];
 
   // Initialize the theme and page controller, and set up listeners for theme changes.
@@ -61,8 +54,16 @@ class _MainAppState extends State<MainApp> {
     final settings = await SettingsService.loadSettings();
     _seedColor = settings.seedColor;
     final seedColor = ThemeService.seedColorFromHex(_seedColor);
-    _lightTheme = ThemeService.buildTheme(Brightness.light, settings.fontSize, seedColor);
-    _darkTheme = ThemeService.buildTheme(Brightness.dark, settings.fontSize, seedColor);
+    _lightTheme = ThemeService.buildTheme(
+      Brightness.light,
+      settings.fontSize,
+      seedColor,
+    );
+    _darkTheme = ThemeService.buildTheme(
+      Brightness.dark,
+      settings.fontSize,
+      seedColor,
+    );
     _themeMode = ThemeService.themeModeFromString(settings.theme);
     themeNotifier.value = settings.theme;
     fontSizeNotifier.value = settings.fontSize;
@@ -78,8 +79,16 @@ class _MainAppState extends State<MainApp> {
   void _onThemeChanged() {
     _seedColor = seedColorNotifier.value;
     final seedColor = ThemeService.seedColorFromHex(_seedColor);
-    _lightTheme = ThemeService.buildTheme(Brightness.light, fontSizeNotifier.value, seedColor);
-    _darkTheme = ThemeService.buildTheme(Brightness.dark, fontSizeNotifier.value, seedColor);
+    _lightTheme = ThemeService.buildTheme(
+      Brightness.light,
+      fontSizeNotifier.value,
+      seedColor,
+    );
+    _darkTheme = ThemeService.buildTheme(
+      Brightness.dark,
+      fontSizeNotifier.value,
+      seedColor,
+    );
     _themeMode = ThemeService.themeModeFromString(themeNotifier.value);
     if (mounted) {
       setState(() {});
@@ -95,25 +104,27 @@ class _MainAppState extends State<MainApp> {
     super.dispose();
   }
 
+  Future<void> logNewSession(BuildContext context) async {
+    final sessionType = await showDialog<SessionType>(
+      context: context,
+      builder: (context) => const SessionTypeDialog(),
+    );
+    if (sessionType == null || !context.mounted) return;
 
-  void logNewSession(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SessionLogScreen()),
+      MaterialPageRoute(
+        builder: (context) => SessionLogScreen(sessionType: sessionType),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
     //If the theme is still loading, show a loading indicator.
     if (!_themeLoaded) {
       return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 

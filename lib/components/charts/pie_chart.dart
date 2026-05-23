@@ -29,13 +29,16 @@ class ClimbingPieChart extends StatelessWidget {
         children: [
           Expanded(
             child: Chart<CategoryChartPoint>(
+              key: ValueKey(data),
               data: data,
               variables: {
                 'category': Variable<CategoryChartPoint, String>(
                   accessor: (point) => point.category,
+                  scale: OrdinalScale(inflate: true),
                 ),
                 'count': Variable<CategoryChartPoint, num>(
                   accessor: (point) => point.value,
+                  scale: LinearScale(min: 0),
                 ),
               },
               transforms: [Proportion(variable: 'count', as: 'percent')],

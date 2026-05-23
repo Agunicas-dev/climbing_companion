@@ -36,10 +36,12 @@ class ClimbingHorizontalBarChart extends StatelessWidget {
       title: title,
       height: height,
       child: Chart<CategoryChartPoint>(
+        key: ValueKey(data),
         data: data,
         variables: {
           'category': Variable<CategoryChartPoint, String>(
             accessor: (point) => point.category,
+            scale: OrdinalScale(inflate: true),
           ),
           'count': Variable<CategoryChartPoint, num>(
             accessor: (point) => point.value,
@@ -65,7 +67,11 @@ class ClimbingHorizontalBarChart extends StatelessWidget {
           ),
         ],
         coord: RectCoord(transposed: true),
-        padding: (_) => const EdgeInsets.fromLTRB(48, 8, 12, 40),
+        padding: (size) {
+          final rightPadding = (size.width * 0.08).clamp(24.0, 48.0).toDouble();
+          final leftPadding = (size.width * 0.14).clamp(48.0, 72.0).toDouble();
+          return EdgeInsets.fromLTRB(leftPadding, 8, rightPadding, 40);
+        },
         axes: [
           AxisGuide(
             dim: Dim.y,

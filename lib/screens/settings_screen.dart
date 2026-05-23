@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../main.dart';
 import '../models/settings.dart';
+import '../services/grade_scale_service.dart';
 import '../services/settings_service.dart';
 import '../services/theme_service.dart';
 
@@ -24,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _bioCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
 
-  //Load settings on app start and populate controllers with existing values. 
+  //Load settings on app start and populate controllers with existing values.
   @override
   void initState() {
     super.initState();
@@ -62,10 +63,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _loading = false;
     });
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Settings saved')));
     }
   }
-
 
   //Function to open a color picker dialog and allow the user to select a new theme color.
   Future<void> _pickSeedColor() async {
@@ -116,11 +118,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       try {
-
         // Get app documents directory
         final appDir = await getApplicationDocumentsDirectory();
         final imagesDir = Directory('${appDir.path}/assets/images');
-        
+
         // Create directory if it doesn't exist
         if (!await imagesDir.exists()) {
           await imagesDir.create(recursive: true);
@@ -145,12 +146,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } catch (e) {
         //Show an error message to the user if there was an issue saving the profile picture.
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving image: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error saving image: $e')));
         }
       }
     }
+  }
+
+  void _deleteProfilePicture() {
+    setState(() {
+      _settings.profilePicturePath = '';
+    });
+  }
+
+  Brightness _previewBrightness() {
+    return switch (_settings.theme) {
+      'light' => Brightness.light,
+      'dark' => Brightness.dark,
+      _ => Theme.of(context).brightness,
+    };
+  }
+
+  String _profileImagePath() {
+    if (_settings.profilePicturePath.isNotEmpty) {
+      return _settings.profilePicturePath;
+    }
+
+    final suffix = _previewBrightness() == Brightness.dark ? 'dark' : 'light';
+    return 'lib/assets/images/default_profile_$suffix.png';
+  }
+
+  ImageProvider _profileImage(String imagePath) {
+    if (_settings.profilePicturePath.isNotEmpty) {
+      return FileImage(File(imagePath));
+    }
+
+    return AssetImage(imagePath);
   }
 
   //Dispose of the text controllers when the widget is removed from the widget tree to free up resources and prevent memory leaks.
@@ -168,7 +200,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(
+            "Settings",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -180,69 +215,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       //Call to the _loading variable to determine whether to show a loading indicator or the settings form.
       body: _loading
-          ? const Center(child: CircularProgressIndicator()) //If the page is still loading, show a circular progress indicator in the center of the screen.
+          ? const Center(
+              child: CircularProgressIndicator(),
+            ) //If the page is still loading, show a circular progress indicator in the center of the screen.
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Profile',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 16),
                   Center(
-                    child: GestureDetector(
-                      onTap: _pickImage,
-                      child: _settings.profilePicturePath.isEmpty
-                          ? Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(50),
+                    child: Column(
+                      children: [
+                        Builder(
+                          builder: (context) {
+                            final imagePath = _profileImagePath();
+                            return GestureDetector(
+                              onTap: _pickImage,
+                              child: CircleAvatar(
+                                key: ValueKey(imagePath),
+                                radius: 50,
+                                backgroundImage: _profileImage(imagePath),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.camera_alt, color: Colors.grey[600]),
-                                  const SizedBox(height: 4),
-                                  Text('Tap to upload', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                ],
-                              ),
-                            )
-                          : CircleAvatar(
-                              radius: 50,
-                              backgroundImage: FileImage(File(_settings.profilePicturePath)),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.photo_camera),
+                              label: const Text('Change'),
                             ),
+                            if (_settings.profilePicturePath.isNotEmpty)
+                              TextButton.icon(
+                                onPressed: _deleteProfilePicture,
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Remove'),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(controller: _usernameCtrl, decoration: const InputDecoration(labelText: 'Username')),
+                  TextField(
+                    controller: _usernameCtrl,
+                    decoration: const InputDecoration(labelText: 'Username'),
+                  ),
                   const SizedBox(height: 8),
-                  TextField(controller: _bioCtrl, decoration: const InputDecoration(labelText: 'Bio')),
+                  TextField(
+                    controller: _bioCtrl,
+                    decoration: const InputDecoration(labelText: 'Bio'),
+                  ),
                   const SizedBox(height: 8),
-                  TextField(controller: _locationCtrl, decoration: const InputDecoration(labelText: 'Location')),
+                  TextField(
+                    controller: _locationCtrl,
+                    decoration: const InputDecoration(labelText: 'Location'),
+                  ),
                   const SizedBox(height: 16),
 
-                  const Text('Preferences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Preferences',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _settings.gradingSystem,
-                    items: const [
-                      DropdownMenuItem(value: 'YDS', child: Text('YDS')),
-                      DropdownMenuItem(value: 'French', child: Text('French')),
-                      DropdownMenuItem(value: 'Font', child: Text('Font')),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PreferenceToggleButton(
+                          icon: Icons.terrain,
+                          label: 'Bouldering',
+                          selected: _settings.likesBouldering,
+                          onPressed: () => setState(
+                            () => _settings.likesBouldering =
+                                !_settings.likesBouldering,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _PreferenceToggleButton(
+                          icon: Icons.vertical_align_top,
+                          label: 'Lead',
+                          selected: _settings.likesLead,
+                          onPressed: () => setState(
+                            () => _settings.likesLead = !_settings.likesLead,
+                          ),
+                        ),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _settings.gradingSystem = v ?? _settings.gradingSystem),
-                    decoration: const InputDecoration(labelText: 'Grading system'),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    initialValue: _settings.units,
+                    initialValue: GradeScaleService.normalizeSystem(
+                      _settings.gradingSystem,
+                    ),
                     items: const [
-                      DropdownMenuItem(value: 'metric', child: Text('Metric')),
-                      DropdownMenuItem(value: 'imperial', child: Text('Imperial')),
+                      DropdownMenuItem(
+                        value: GradeScaleService.hueco,
+                        child: Text('Hueco (V-Scale)'),
+                      ),
+                      DropdownMenuItem(
+                        value: GradeScaleService.font,
+                        child: Text('Font'),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _settings.units = v ?? _settings.units),
-                    decoration: const InputDecoration(labelText: 'Units'),
+                    onChanged: _settings.useDisciplineGradeSystems
+                        ? null
+                        : (v) => setState(
+                            () => _settings.gradingSystem =
+                                v ?? _settings.gradingSystem,
+                          ),
+                    decoration: const InputDecoration(
+                      labelText: 'Grading system',
+                    ),
+                    disabledHint: Text(
+                      GradeScaleService.labelForSystem(_settings.gradingSystem),
+                    ),
+                  ),
+                  SwitchListTile(
+                    title: const Text('Use discipline grade systems'),
+                    subtitle: const Text('Hueco for bouldering, Font for lead'),
+                    value: _settings.useDisciplineGradeSystems,
+                    onChanged: (v) =>
+                        setState(() => _settings.useDisciplineGradeSystems = v),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
@@ -251,17 +355,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       DropdownMenuItem(value: 'en', child: Text('English')),
                       DropdownMenuItem(value: 'es', child: Text('Spanish')),
                     ],
-                    onChanged: (v) => setState(() => _settings.language = v ?? _settings.language),
+                    onChanged: (v) => setState(
+                      () => _settings.language = v ?? _settings.language,
+                    ),
                     decoration: const InputDecoration(labelText: 'Language'),
-                  ),
-                  SwitchListTile(
-                    title: const Text('Notifications'),
-                    value: _settings.notifications,
-                    onChanged: (v) => setState(() => _settings.notifications = v),
                   ),
                   const SizedBox(height: 16),
 
-                  const Text('Appearance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Appearance',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: _settings.theme,
@@ -270,39 +374,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       DropdownMenuItem(value: 'light', child: Text('Light')),
                       DropdownMenuItem(value: 'dark', child: Text('Dark')),
                     ],
-                    onChanged: (v) => setState(() => _settings.theme = v ?? _settings.theme),
+                    onChanged: (v) =>
+                        setState(() => _settings.theme = v ?? _settings.theme),
                     decoration: const InputDecoration(labelText: 'Theme'),
                   ),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: _pickSeedColor,
                     borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Theme Color', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                              const SizedBox(height: 2),
-                              Text(_settings.seedColor, style: const TextStyle(fontSize: 16)),
-                            ],
-                          ),
                           Container(
-                            width: 28,
-                            height: 28,
+                            width: 32,
+                            height: 32,
                             decoration: BoxDecoration(
-                              color: ThemeService.seedColorFromHex(_settings.seedColor),
+                              color: ThemeService.seedColorFromHex(
+                                _settings.seedColor,
+                              ),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.black12),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Theme Color',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _settings.seedColor,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right),
                         ],
                       ),
                     ),
@@ -315,7 +429,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       DropdownMenuItem(value: 'medium', child: Text('Medium')),
                       DropdownMenuItem(value: 'large', child: Text('Large')),
                     ],
-                    onChanged: (v) => setState(() => _settings.fontSize = v ?? _settings.fontSize),
+                    onChanged: (v) => setState(
+                      () => _settings.fontSize = v ?? _settings.fontSize,
+                    ),
                     decoration: const InputDecoration(labelText: 'Font size'),
                   ),
 
@@ -333,6 +449,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _PreferenceToggleButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  const _PreferenceToggleButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final foregroundColor = selected
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
+    final backgroundColor = selected
+        ? colorScheme.primaryContainer
+        : colorScheme.surfaceContainerHighest;
+
+    return SizedBox(
+      height: 48,
+      child: FilledButton.tonalIcon(
+        onPressed: onPressed,
+        icon: Icon(
+          selected ? Icons.check_circle : icon,
+          color: foregroundColor,
+        ),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        style: FilledButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
     );
   }
 }

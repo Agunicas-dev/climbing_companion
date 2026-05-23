@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 
 //Basic theme definition.
 class ThemeService {
-  static ThemeData buildTheme(Brightness brightness, String fontSize, Color seedColor) {
+  static ThemeData buildTheme(
+    Brightness brightness,
+    String fontSize,
+    Color seedColor,
+  ) {
     // Font size multiplier
-    final fontSizeMultiplier = fontSize == 'small'
-        ? 0.85
-        : fontSize == 'large'
-            ? 1.15
-            : 1.0;
+    final fontSizeMultiplier = fontSize == 'large'
+        ? 1.35
+        : fontSize == 'medium'
+        ? 1.18
+        : 1.0;
 
     return ThemeData(
       useMaterial3: true,
@@ -42,15 +46,9 @@ class ThemeService {
           fontSize: 16 * fontSizeMultiplier,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16 * fontSizeMultiplier,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14 * fontSizeMultiplier,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12 * fontSizeMultiplier,
-        ),
+        bodyLarge: TextStyle(fontSize: 16 * fontSizeMultiplier),
+        bodyMedium: TextStyle(fontSize: 14 * fontSizeMultiplier),
+        bodySmall: TextStyle(fontSize: 12 * fontSizeMultiplier),
         labelLarge: TextStyle(
           fontSize: 14 * fontSizeMultiplier,
           fontWeight: FontWeight.w600,

@@ -1,5 +1,5 @@
 name: climbing_companion
-description: "A new Flutter project."
+description: "A mobile app Developed in Flutter to help climbers track their climbing sessions, progress, and goals. The app will allow users to log their climbs, set goals, and view their progress over time."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -17,6 +17,7 @@ dependencies:
   shared_preferences: ^2.1.0
   image_picker: ^1.0.0
   flutter_colorpicker: ^1.1.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -27,6 +28,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - lib/assets/images/
 
 fonts:
   - family: Inter

@@ -1,4 +1,7 @@
 import 'package:climbing_companion/components/climb_log_card.dart';
+import 'package:climbing_companion/models/session_type.dart';
+import 'package:climbing_companion/services/grade_scale_service.dart';
+import 'package:climbing_companion/services/settings_service.dart';
 import 'package:flutter/material.dart';
 
 class ClimbItem {
@@ -8,13 +11,24 @@ class ClimbItem {
   String? grade;
   String? completion;
 
-  ClimbItem({required this.id, required this.time, required this.createdAt, this.grade, this.completion});
+  ClimbItem({
+    required this.id,
+    required this.time,
+    required this.createdAt,
+    this.grade,
+    this.completion,
+  });
 }
 
 class ClimbListSession extends StatefulWidget {
   final String Function() currentTimeProvider;
+  final SessionDiscipline discipline;
 
-  const ClimbListSession({super.key, required this.currentTimeProvider});
+  const ClimbListSession({
+    super.key,
+    required this.currentTimeProvider,
+    required this.discipline,
+  });
 
   @override
   State<ClimbListSession> createState() => ClimbListSessionState();
@@ -22,6 +36,25 @@ class ClimbListSession extends StatefulWidget {
 
 class ClimbListSessionState extends State<ClimbListSession> {
   final List<ClimbItem> _climbs = [];
+  List<String> _gradeOptions = GradeScaleService.huecoGrades;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGradeOptions();
+  }
+
+  Future<void> _loadGradeOptions() async {
+    final settings = await SettingsService.loadSettings();
+    final gradeSystem = GradeScaleService.systemForDiscipline(
+      settings: settings,
+      discipline: widget.discipline,
+    );
+    if (!mounted) return;
+    setState(() {
+      _gradeOptions = GradeScaleService.gradesForSystem(gradeSystem);
+    });
+  }
 
   void addClimb() {
     setState(() {
@@ -63,7 +96,10 @@ class ClimbListSessionState extends State<ClimbListSession> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: addClimb,
-                child: const Text('Add Climb', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
+                child: const Text(
+                  'Add Climb',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                ),
               ),
             ),
           ),
@@ -130,15 +166,17 @@ class ClimbListSessionState extends State<ClimbListSession> {
           _climbs.isEmpty
               ? const Center(child: Text('No climbs added yet.'))
               : Expanded(
-                child: ListView.separated(
+                  child: ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     itemCount: sortedClimbs.length,
-                    separatorBuilder: (context, index) => const SizedBox.shrink(),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox.shrink(),
                     itemBuilder: (context, index) {
                       final climb = sortedClimbs[index];
                       return ClimbLogCard(
                         key: ValueKey(climb.id),
                         time: climb.time,
+                        grades: _gradeOptions,
                         selectedGrade: climb.grade,
                         selectedCompletion: climb.completion,
                         onGradeChanged: (value) {
@@ -152,7 +190,9 @@ class ClimbListSessionState extends State<ClimbListSession> {
                           });
                         },
                         onDelete: () {
-                          final originalIndex = _climbs.indexWhere((item) => item.id == climb.id);
+                          final originalIndex = _climbs.indexWhere(
+                            (item) => item.id == climb.id,
+                          );
                           if (originalIndex != -1) {
                             removeClimb(originalIndex);
                           }
@@ -160,7 +200,7 @@ class ClimbListSessionState extends State<ClimbListSession> {
                       );
                     },
                   ),
-              ),
+                ),
         ],
       ),
     );

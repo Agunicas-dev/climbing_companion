@@ -3,7 +3,10 @@ class Settings {
   String bio;
   String location;
   String profilePicturePath; // local file path to profile picture
-  String gradingSystem; // e.g., 'YDS', 'Font'
+  bool likesBouldering;
+  bool likesLead;
+  String gradingSystem; // 'hueco' or 'font'
+  bool useDisciplineGradeSystems;
   String units; // 'metric' or 'imperial'
   String language; // e.g., 'en', 'es'
   bool notifications;
@@ -16,7 +19,10 @@ class Settings {
     this.bio = '',
     this.location = '',
     this.profilePicturePath = '',
-    this.gradingSystem = 'YDS',
+    this.likesBouldering = true,
+    this.likesLead = true,
+    this.gradingSystem = 'hueco',
+    this.useDisciplineGradeSystems = false,
     this.units = 'metric',
     this.language = 'en',
     this.notifications = true,
@@ -31,7 +37,10 @@ class Settings {
       'bio': bio,
       'location': location,
       'profilePicturePath': profilePicturePath,
+      'likesBouldering': likesBouldering,
+      'likesLead': likesLead,
       'gradingSystem': gradingSystem,
+      'useDisciplineGradeSystems': useDisciplineGradeSystems,
       'units': units,
       'language': language,
       'notifications': notifications,
@@ -47,7 +56,11 @@ class Settings {
       bio: (map['bio'] as String?) ?? '',
       location: (map['location'] as String?) ?? '',
       profilePicturePath: (map['profilePicturePath'] as String?) ?? '',
-      gradingSystem: (map['gradingSystem'] as String?) ?? 'YDS',
+      likesBouldering: (map['likesBouldering'] as bool?) ?? true,
+      likesLead: (map['likesLead'] as bool?) ?? true,
+      gradingSystem: (map['gradingSystem'] as String?) ?? 'hueco',
+      useDisciplineGradeSystems:
+          (map['useDisciplineGradeSystems'] as bool?) ?? false,
       units: (map['units'] as String?) ?? 'metric',
       language: (map['language'] as String?) ?? 'en',
       notifications: (map['notifications'] as bool?) ?? true,

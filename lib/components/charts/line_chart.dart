@@ -8,6 +8,7 @@ class ClimbingLineChart extends StatelessWidget {
   final String valueLabel;
   final double height;
   final Color color;
+  final List<String>? yLabels;
 
   const ClimbingLineChart({
     super.key,
@@ -16,6 +17,7 @@ class ClimbingLineChart extends StatelessWidget {
     this.valueLabel = 'Value',
     this.height = 220,
     this.color = const Color(0xff2563eb),
+    this.yLabels,
   });
 
   @override
@@ -28,7 +30,9 @@ class ClimbingLineChart extends StatelessWidget {
       title: title,
       height: height,
       child: Chart<SessionChartPoint>(
+        key: ValueKey(data),
         data: data,
+        padding: (size) => const EdgeInsets.fromLTRB(40, 8, 12, 32),
         variables: {
           'session': Variable<SessionChartPoint, String>(
             accessor: (point) => point.label,
@@ -36,7 +40,18 @@ class ClimbingLineChart extends StatelessWidget {
           ),
           valueLabel: Variable<SessionChartPoint, num>(
             accessor: (point) => point.value,
-            scale: LinearScale(min: 0),
+            scale: LinearScale(
+              min: 0,
+              formatter: (value) {
+                if (yLabels != null) {
+                  final index = value.toInt();
+                  if (index >= 0 && index < yLabels!.length) {
+                    return yLabels![index];
+                  }
+                }
+                return value.toInt().toString();
+              },
+            ),
           ),
         },
         marks: [
@@ -52,7 +67,17 @@ class ClimbingLineChart extends StatelessWidget {
             size: SizeEncode(value: 5),
           ),
         ],
-        axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
+        axes: [
+          Defaults.horizontalAxis,
+          AxisGuide(
+            variable: valueLabel,
+            label: LabelStyle(
+              textStyle: Defaults.textStyle,
+              offset: const Offset(-8, 0),
+            ),
+            grid: Defaults.strokeStyle,
+          ),
+        ],
       ),
     );
   }

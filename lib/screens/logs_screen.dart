@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import '../models/session.dart';
 import 'climbing_log_screen.dart';
 
-class LogsScreen extends StatelessWidget {
+class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
 
+  @override
+  State<LogsScreen> createState() => _LogsScreenState();
+}
+
+class _LogsScreenState extends State<LogsScreen> {
   //Formatting for the date in order to make it readable.
   String _formatSessionDate(DateTime date) {
     final local = date.toLocal();
@@ -17,6 +22,15 @@ class LogsScreen extends StatelessWidget {
     final minute = local.minute.toString().padLeft(2, '0');
     final second = local.second.toString().padLeft(2, '0');
     return '$year-$month-$day $hour:$minute:$second';
+  }
+
+  String _disciplineIconPath(BuildContext context, Session session) {
+    final brightness = Theme.of(context).brightness;
+    final iconSuffix = brightness == Brightness.dark ? 'light' : 'dark';
+    final disciplinePrefix = session.discipline == 'lead'
+        ? 'lead'
+        : 'bouldering';
+    return 'lib/assets/images/${disciplinePrefix}_$iconSuffix.png';
   }
 
   @override
@@ -32,7 +46,6 @@ class LogsScreen extends StatelessWidget {
       body: FutureBuilder<List<Session>>(
         future: IsarService.getAllSessions(),
         builder: (context, snapshot) {
-
           //Show loading indicator when waiting for the data to load.
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -43,7 +56,9 @@ class LogsScreen extends StatelessWidget {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text('Error loading sessions: ${snapshot.error}'),//Show the error.
+                child: Text(
+                  'Error loading sessions: ${snapshot.error}',
+                ), //Show the error.
               ),
             );
           }
@@ -83,7 +98,33 @@ class LogsScreen extends StatelessWidget {
                   ),
                   title: Text(_formatSessionDate(session.date)),
                   subtitle: Text(
-                    'Total time: ${session.totalTime}\nClimbs: ${session.climbs.length}',
+                    '${session.environmentLabel}\n'
+                    'Total time: ${session.totalTime}\n'
+                    'Climbs: ${session.climbs.length}',
+                  ),
+                  trailing: SizedBox(
+                    width: 78,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            _disciplineIconPath(context, session),
+                            width: 42,
+                            height: 42,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            session.disciplineLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   isThreeLine: true,
                   onTap: () {
@@ -92,7 +133,11 @@ class LogsScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => ClimbingLog(session: session),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    });
                   },
                 ),
               );

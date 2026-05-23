@@ -1,5 +1,6 @@
 import '../models/climb.dart';
 import '../models/session.dart';
+import 'grade_scale_service.dart';
 import 'isar_service.dart';
 
 class StatisticsService {
@@ -46,7 +47,7 @@ class StatisticsService {
       date: date,
       totalTime: totalTime,
       totalDuration: _durationFromStopwatch(totalTime),
-      climbs: List.unmodifiable(climbs),
+      climbs: List<Climb>.unmodifiable(climbs),
     );
   }
 
@@ -65,26 +66,188 @@ class StatisticsService {
 //Class used to calculate and store various climbing statistics based on the sessions and climbs data.
 class GlobalClimbingStatistics {
   final List<Session> sessions;
+  final List<Climb> allClimbs;
+  final int totalClimbs;
+  final Duration totalDuration;
+  final List<CategoryChartPoint> gradeDistribution;
+  final List<CategoryChartPoint> completionDistribution;
+  final List<CategoryChartPoint> successDistribution;
+  final List<SessionChartPoint> maxGradeTimeline;
+  final List<SessionChartPoint> climbsBySession;
+  final List<SessionChartPoint> durationBySession;
+  final Duration averageRestTime;
+  final List<HeatmapChartPoint> environmentDisciplineHeatmap;
 
-  const GlobalClimbingStatistics._(this.sessions);
+  const GlobalClimbingStatistics._({
+    required this.sessions,
+    required this.allClimbs,
+    required this.totalClimbs,
+    required this.totalDuration,
+    required this.gradeDistribution,
+    required this.completionDistribution,
+    required this.successDistribution,
+    required this.maxGradeTimeline,
+    required this.climbsBySession,
+    required this.durationBySession,
+    required this.averageRestTime,
+    required this.environmentDisciplineHeatmap,
+  });
 
   factory GlobalClimbingStatistics.fromSessions(List<Session> sessions) {
     final sortedSessions = [...sessions]
       ..sort((a, b) => a.date.compareTo(b.date));
-    return GlobalClimbingStatistics._(List.unmodifiable(sortedSessions));
-  }
+    final immutableSessions = List<Session>.unmodifiable(sortedSessions);
 
-  int get sessionCount => sessions.length;
+    final allClimbs = List<Climb>.unmodifiable(
+      immutableSessions.expand((session) => session.climbs),
+    );
 
-  int get totalClimbs =>
-      sessions.fold(0, (total, session) => total + session.climbs.length);
+    final totalClimbs = allClimbs.length;
 
-  Duration get totalDuration {
-    return sessions.fold(Duration.zero, (total, session) {
+    final totalDuration = immutableSessions.fold(Duration.zero, (total, session) {
       return total +
           StatisticsService._durationFromStopwatch(session.totalTime);
     });
+
+    final gradeDistribution = _categoryDistribution(
+      allClimbs.map((climb) => climb.grade),
+      sortGrades: true,
+    );
+
+    final completionDistribution = _categoryDistribution(
+      allClimbs.map((climb) => climb.completion),
+    );
+
+    final successCounts = <String, int>{'Sends': 0, 'Flashes': 0, 'Fails': 0};
+    for (final climb in allClimbs) {
+      final completion = _cleanCategory(climb.completion);
+      if (completion == 'Sent') {
+        successCounts['Sends'] = successCounts['Sends']! + 1;
+      } else if (completion == 'Flash') {
+        successCounts['Flashes'] = successCounts['Flashes']! + 1;
+      } else if (completion == 'Failed') {
+        successCounts['Fails'] = successCounts['Fails']! + 1;
+      }
+    }
+    final successDistribution = successCounts.entries
+        .map((e) => CategoryChartPoint(category: e.key, value: e.value))
+        .toList();
+
+    final maxGradeTimeline = <SessionChartPoint>[];
+    if (immutableSessions.isNotEmpty) {
+      var currentMaxRank = -1;
+      String? currentMaxGrade;
+
+      for (final session in immutableSessions) {
+        var sessionMaxRank = -1;
+        String? sessionMaxGrade;
+
+        for (final climb in session.climbs) {
+          final grade = _cleanCategory(climb.grade);
+          final rank = _gradeValue(grade);
+          if (rank > sessionMaxRank) {
+            sessionMaxRank = rank;
+            sessionMaxGrade = grade;
+          }
+        }
+
+        if (sessionMaxRank > currentMaxRank) {
+          currentMaxRank = sessionMaxRank;
+          currentMaxGrade = sessionMaxGrade;
+        }
+
+        maxGradeTimeline.add(SessionChartPoint(
+          date: session.date,
+          value: currentMaxRank,
+          label: _shortDateLabel(session.date),
+          extra: currentMaxGrade,
+        ));
+      }
+    }
+
+    final climbsBySession = immutableSessions.map((session) {
+      return SessionChartPoint(
+        date: session.date,
+        value: session.climbs.length,
+        label: _shortDateLabel(session.date),
+      );
+    }).toList();
+
+    final durationBySession = immutableSessions.map((session) {
+      return SessionChartPoint(
+        date: session.date,
+        value: StatisticsService._durationFromStopwatch(session.totalTime)
+            .inMinutes,
+        label: _shortDateLabel(session.date),
+      );
+    }).toList();
+
+    final gaps = <int>[];
+    for (final session in immutableSessions) {
+      final climbSeconds =
+          session.climbs
+              .map(
+                (climb) => StatisticsService._durationFromStopwatch(
+                  climb.time,
+                ).inSeconds,
+              )
+              .toList()
+            ..sort();
+
+      for (var index = 1; index < climbSeconds.length; index++) {
+        final gap = climbSeconds[index] - climbSeconds[index - 1];
+        if (gap > 0) gaps.add(gap);
+      }
+    }
+
+    final averageRestTime = gaps.isEmpty
+        ? Duration.zero
+        : Duration(
+          seconds: gaps.fold<int>(0, (total, gap) => total + gap) ~/ gaps.length,
+        );
+
+    final heatmapCounts = <String, Map<String, int>>{
+      'Indoor': {'Boulder': 0, 'Lead': 0},
+      'Outdoor': {'Boulder': 0, 'Lead': 0},
+    };
+
+    for (final session in immutableSessions) {
+      final env = session.environmentLabel;
+      final disc = session.disciplineLabel;
+      if (heatmapCounts.containsKey(env) &&
+          heatmapCounts[env]!.containsKey(disc)) {
+        heatmapCounts[env]![disc] = heatmapCounts[env]![disc]! + 1;
+      }
+    }
+
+    final environmentDisciplineHeatmap = <HeatmapChartPoint>[];
+    heatmapCounts.forEach((env, disciplines) {
+      disciplines.forEach((disc, count) {
+        environmentDisciplineHeatmap.add(
+          HeatmapChartPoint(x: disc, y: env, value: count),
+        );
+      });
+    });
+
+    return GlobalClimbingStatistics._(
+      sessions: immutableSessions,
+      allClimbs: allClimbs,
+      totalClimbs: totalClimbs,
+      totalDuration: totalDuration,
+      gradeDistribution: gradeDistribution,
+      completionDistribution: completionDistribution,
+      successDistribution: successDistribution,
+      maxGradeTimeline: List<SessionChartPoint>.unmodifiable(maxGradeTimeline),
+      climbsBySession: List<SessionChartPoint>.unmodifiable(climbsBySession),
+      durationBySession: List<SessionChartPoint>.unmodifiable(durationBySession),
+      averageRestTime: averageRestTime,
+      environmentDisciplineHeatmap: List<HeatmapChartPoint>.unmodifiable(
+        environmentDisciplineHeatmap,
+      ),
+    );
   }
+
+  int get sessionCount => sessions.length;
 
   double get averageClimbsPerSession {
     if (sessionCount == 0) return 0;
@@ -123,45 +286,87 @@ class GlobalClimbingStatistics {
     );
   }
 
-  List<Climb> get allClimbs {
-    return List.unmodifiable(sessions.expand((session) => session.climbs));
+  String? get flashGrade {
+    final climbsByGrade = <String, List<Climb>>{};
+    for (final climb in allClimbs) {
+      final grade = _cleanCategory(climb.grade);
+      if (_gradeValue(grade) == -1) continue;
+      climbsByGrade.putIfAbsent(grade, () => []).add(climb);
+    }
+
+    String? highestFlashGrade;
+    var highestGradeValue = -1;
+    for (final entry in climbsByGrade.entries) {
+      final flashCount = entry.value
+          .where((climb) => climb.completion == 'Flash')
+          .length;
+      final flashRate = flashCount / entry.value.length;
+      final gradeValue = _gradeValue(entry.key);
+      if (flashRate >= 0.6 && gradeValue > highestGradeValue) {
+        highestFlashGrade = entry.key;
+        highestGradeValue = gradeValue;
+      }
+    }
+
+    return highestFlashGrade;
   }
 
-  List<SessionChartPoint> get climbsBySession {
-    return sessions
-        .map((session) {
-          return SessionChartPoint(
-            date: session.date,
-            value: session.climbs.length,
-            label: _shortDateLabel(session.date),
-          );
-        })
-        .toList(growable: false);
+  List<SessionChartPoint> sessionsLastNMonths(int n) {
+    final now = DateTime.now();
+    final localNow = DateTime(now.year, now.month, now.day);
+    final monthsToGenerate = n <= 0 ? _monthsSinceFirstSession(localNow) : n;
+    
+    final lastNMonths = List.generate(monthsToGenerate, (i) {
+      return DateTime(localNow.year, localNow.month - (monthsToGenerate - 1 - i), 1);
+    });
+
+    final counts = <DateTime, int>{};
+    for (final month in lastNMonths) {
+      counts[month] = 0;
+    }
+
+    for (final session in sessions) {
+      final localDate = session.date.toLocal();
+      final sessionMonth = DateTime(localDate.year, localDate.month, 1);
+      if (counts.containsKey(sessionMonth)) {
+        counts[sessionMonth] = counts[sessionMonth]! + 1;
+      }
+    }
+
+    final monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return lastNMonths.asMap().entries.map((entry) {
+      final i = entry.key;
+      final month = entry.value;
+      
+      String label;
+      if (monthsToGenerate > 12) {
+        // For long ranges, only show the year for the first month of each year
+        // Use zero-width spaces to keep labels unique while appearing empty
+        if (month.month == 1 || i == 0) {
+          label = "'${month.year.toString().substring(2)}";
+        } else {
+          label = '\u200B' * i;
+        }
+      } else {
+        label = monthNames[month.month - 1];
+      }
+
+      return SessionChartPoint(
+        date: month,
+        value: counts[month]!,
+        label: label,
+      );
+    }).toList();
   }
 
-  List<SessionChartPoint> get durationBySession {
-    return sessions
-        .map((session) {
-          return SessionChartPoint(
-            date: session.date,
-            value: StatisticsService._durationFromStopwatch(
-              session.totalTime,
-            ).inMinutes,
-            label: _shortDateLabel(session.date),
-          );
-        })
-        .toList(growable: false);
-  }
-
-  List<CategoryChartPoint> get gradeDistribution {
-    return _categoryDistribution(
-      allClimbs.map((climb) => climb.grade),
-      sortGrades: true,
-    );
-  }
-
-  List<CategoryChartPoint> get completionDistribution {
-    return _categoryDistribution(allClimbs.map((climb) => climb.completion));
+  int _monthsSinceFirstSession(DateTime now) {
+    if (sessions.isEmpty) return 1;
+    final first = sessions.first.date.toLocal();
+    return (now.year - first.year) * 12 + now.month - first.month + 1;
   }
 
   int _countWhereCompletion(bool Function(String? completion) test) {
@@ -190,7 +395,7 @@ class SessionClimbingStatistics {
       totalDuration: StatisticsService._durationFromStopwatch(
         session.totalTime,
       ),
-      climbs: List.unmodifiable(session.climbs),
+      climbs: List<Climb>.unmodifiable(session.climbs),
     );
   }
 
@@ -259,6 +464,10 @@ class SessionClimbingStatistics {
     return _categoryDistribution(climbs.map((climb) => climb.completion));
   }
 
+  List<GradeCompletionChartPoint> get gradeCompletionBreakdown {
+    return _gradeCompletionBreakdown(climbs);
+  }
+
   List<ClimbTimelinePoint> get climbTimeline {
     return climbs
         .asMap()
@@ -294,15 +503,38 @@ class SessionChartPoint {
   final DateTime date;
   final num value;
   final String label;
+  final dynamic extra;
 
   const SessionChartPoint({
     required this.date,
     required this.value,
     required this.label,
+    this.extra,
   });
 
   Map<String, Object> toMap() {
-    return {'date': date, 'value': value, 'label': label};
+    return {
+      'date': date,
+      'value': value,
+      'label': label,
+      if (extra != null) 'extra': extra as Object,
+    };
+  }
+}
+
+class GradeCompletionChartPoint {
+  final String grade;
+  final String completion;
+  final int value;
+
+  const GradeCompletionChartPoint({
+    required this.grade,
+    required this.completion,
+    required this.value,
+  });
+
+  Map<String, Object> toMap() {
+    return {'grade': grade, 'completion': completion, 'value': value};
   }
 }
 
@@ -330,6 +562,45 @@ class ClimbTimelinePoint {
       'secondsFromStart': secondsFromStart,
     };
   }
+}
+
+class HeatmapChartPoint {
+  final String x;
+  final String y;
+  final num value;
+
+  const HeatmapChartPoint({
+    required this.x,
+    required this.y,
+    required this.value,
+  });
+}
+
+List<GradeCompletionChartPoint> _gradeCompletionBreakdown(List<Climb> climbs) {
+  final grades =
+      climbs.map((climb) => _cleanCategory(climb.grade)).toSet().toList()
+        ..sort((a, b) => _gradeValue(a).compareTo(_gradeValue(b)));
+  const completions = ['Sent', 'Flash', 'Failed'];
+  final counts = <String, Map<String, int>>{};
+
+  for (final climb in climbs) {
+    final grade = _cleanCategory(climb.grade);
+    final completion = _cleanCategory(climb.completion);
+    if (!completions.contains(completion)) continue;
+
+    counts.putIfAbsent(grade, () => {});
+    counts[grade]![completion] = (counts[grade]![completion] ?? 0) + 1;
+  }
+
+  return [
+    for (final grade in grades)
+      for (final completion in completions)
+        GradeCompletionChartPoint(
+          grade: grade,
+          completion: completion,
+          value: counts[grade]?[completion] ?? 0,
+        ),
+  ];
 }
 
 List<CategoryChartPoint> _categoryDistribution(
@@ -383,17 +654,13 @@ String? _hardestGrade(Iterable<String?> grades) {
 }
 
 int _gradeValue(String grade) {
-  final match = RegExp(
-    r'^V(\d+)$',
-    caseSensitive: false,
-  ).firstMatch(grade.trim());
-  if (match == null) return -1;
-  return int.tryParse(match.group(1) ?? '') ?? -1;
+  return GradeScaleService.gradeRank(grade);
 }
 
 String _shortDateLabel(DateTime date) {
   final local = date.toLocal();
+  final year = local.year.toString().substring(2);
   final month = local.month.toString().padLeft(2, '0');
   final day = local.day.toString().padLeft(2, '0');
-  return '$month/$day';
+  return '$month/$day/\'$year';
 }

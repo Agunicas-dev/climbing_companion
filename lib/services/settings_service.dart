@@ -1,12 +1,17 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/settings.dart';
+import 'grade_scale_service.dart';
 
 class SettingsService {
   static const _keyUsername = 'settings_username';
   static const _keyBio = 'settings_bio';
   static const _keyLocation = 'settings_location';
   static const _keyProfilePicture = 'settings_profile_picture';
+  static const _keyLikesBouldering = 'settings_likes_bouldering';
+  static const _keyLikesLead = 'settings_likes_lead';
   static const _keyGrading = 'settings_grading';
+  static const _keyUseDisciplineGradeSystems =
+      'settings_use_discipline_grade_systems';
   static const _keyUnits = 'settings_units';
   static const _keyLanguage = 'settings_language';
   static const _keyNotifications = 'settings_notifications';
@@ -21,7 +26,13 @@ class SettingsService {
       bio: prefs.getString(_keyBio) ?? '',
       location: prefs.getString(_keyLocation) ?? '',
       profilePicturePath: prefs.getString(_keyProfilePicture) ?? '',
-      gradingSystem: prefs.getString(_keyGrading) ?? 'YDS',
+      likesBouldering: prefs.getBool(_keyLikesBouldering) ?? true,
+      likesLead: prefs.getBool(_keyLikesLead) ?? true,
+      gradingSystem: GradeScaleService.normalizeSystem(
+        prefs.getString(_keyGrading) ?? GradeScaleService.hueco,
+      ),
+      useDisciplineGradeSystems:
+          prefs.getBool(_keyUseDisciplineGradeSystems) ?? false,
       units: prefs.getString(_keyUnits) ?? 'metric',
       language: prefs.getString(_keyLanguage) ?? 'en',
       notifications: prefs.getBool(_keyNotifications) ?? true,
@@ -37,7 +48,16 @@ class SettingsService {
     await prefs.setString(_keyBio, s.bio);
     await prefs.setString(_keyLocation, s.location);
     await prefs.setString(_keyProfilePicture, s.profilePicturePath);
-    await prefs.setString(_keyGrading, s.gradingSystem);
+    await prefs.setBool(_keyLikesBouldering, s.likesBouldering);
+    await prefs.setBool(_keyLikesLead, s.likesLead);
+    await prefs.setString(
+      _keyGrading,
+      GradeScaleService.normalizeSystem(s.gradingSystem),
+    );
+    await prefs.setBool(
+      _keyUseDisciplineGradeSystems,
+      s.useDisciplineGradeSystems,
+    );
     await prefs.setString(_keyUnits, s.units);
     await prefs.setString(_keyLanguage, s.language);
     await prefs.setBool(_keyNotifications, s.notifications);

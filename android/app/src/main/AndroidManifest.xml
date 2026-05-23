@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="climbing_companion"
+        android:label="Climbing Companion"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

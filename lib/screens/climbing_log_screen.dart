@@ -3,9 +3,12 @@
   It shows the session date, total time, and the list of climbs recorded for that session.
 */
 
+import 'package:climbing_companion/services/isar_service.dart';
 import 'package:flutter/material.dart';
+import '../components/charts/grade_completion_bar_chart.dart';
 import '../components/charts/horizontal_bar_chart.dart';
 import '../components/charts/pie_chart.dart';
+import '../components/statistics/session_statistics_summary.dart';
 import '../models/session.dart';
 import '../services/statistics_service.dart';
 
@@ -27,6 +30,34 @@ class _ClimbingLogState extends State<ClimbingLog> {
     super.dispose();
   }
 
+  Future<void> _confirmDeletion(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Session'),
+        content: const Text('Are you sure you want to delete this session? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await IsarService.deleteSession(widget.session.id);
+      if (context.mounted) {
+        Navigator.pop(context); // Go back after deletion
+      }
+    }
+  }
+
   String _formatSessionDate(DateTime date) {
     final local = date.toLocal();
     final year = local.year.toString().padLeft(4, '0');
@@ -38,59 +69,6 @@ class _ClimbingLogState extends State<ClimbingLog> {
     return '$year-$month-$day $hour:$minute:$second';
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds.remainder(60);
-    if (minutes == 0) return '${seconds}s';
-    return '${minutes}m ${seconds}s';
-  }
-
-  Widget _buildStatisticsSummary(
-    BuildContext context,
-    SessionClimbingStatistics statistics,
-  ) {
-    final averageRestTime = statistics.averageTimeBetweenClimbs;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _StatTile(
-            label: 'Total climbs',
-            value: '${statistics.totalClimbs}',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatTile(
-            label: 'Successful climbs',
-            value: '${statistics.completedClimbs}',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatTile(
-            label: 'Failed attempts',
-            value: '${statistics.failedClimbs}',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatTile(
-            label: 'Best grade',
-            value: statistics.hardestSuccessfulGrade ?? 'N/A',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatTile(
-            label: 'Avg rest',
-            value: _formatDuration(averageRestTime),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,6 +76,12 @@ class _ClimbingLogState extends State<ClimbingLog> {
         title: const Text('Session details'),
         shadowColor: Colors.black,
         elevation: 3,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _confirmDeletion(context),
+          ),
+        ],
       ),
 
       //Layout builder used to contain the climbs list to a percentage of the screen height, allowing for better use of space and a more balanced layout.
@@ -113,6 +97,10 @@ class _ClimbingLogState extends State<ClimbingLog> {
           final pieChartHeight =
               (constraints.maxHeight - climbsListHeight - 220)
                   .clamp(150.0, 240.0)
+                  .toDouble();
+          final groupedChartHeight =
+              (constraints.maxHeight - climbsListHeight - 180)
+                  .clamp(220.0, 280.0)
                   .toDouble();
 
           return Padding(
@@ -133,8 +121,16 @@ class _ClimbingLogState extends State<ClimbingLog> {
                     'Total time: ${widget.session.totalTime}',
                     style: const TextStyle(fontSize: 16),
                   ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Chip(label: Text(widget.session.environmentLabel)),
+                      Chip(label: Text(widget.session.disciplineLabel)),
+                    ],
+                  ),
                   const SizedBox(height: 16),
-                  _buildStatisticsSummary(context, statistics),
+                  SessionStatisticsSummary(statistics: statistics),
                   const SizedBox(height: 16),
                   const Text(
                     'Climbs',
@@ -249,6 +245,12 @@ class _ClimbingLogState extends State<ClimbingLog> {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
+                  GradeCompletionBarChart(
+                    title: 'Outcomes by grade',
+                    data: statistics.gradeCompletionBreakdown,
+                    height: groupedChartHeight,
+                  ),
+                  const SizedBox(height: 16),
                   ClimbingPieChart(
                     title: 'Completion',
                     data: statistics.completionDistribution,
@@ -259,52 +261,6 @@ class _ClimbingLogState extends State<ClimbingLog> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatTile({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 84,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SizedBox(
-            height: 34,
-            child: Center(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ],
       ),
     );
   }

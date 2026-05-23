@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:graphic/graphic.dart';
 
-class ClimbingHeatmapChart extends StatelessWidget {
-  final List<HeatmapChartPoint> data;
+class Stacked100BarChart extends StatelessWidget {
+  final List<StackedBarData> data;
   final String title;
   final double height;
 
-  const ClimbingHeatmapChart({
+  const Stacked100BarChart({
     super.key,
     required this.data,
     required this.title,
-    this.height = 220,
+    this.height = 180,
   });
 
   @override
@@ -22,46 +22,51 @@ class ClimbingHeatmapChart extends StatelessWidget {
     return _ChartSection(
       title: title,
       height: height,
-      child: Chart<HeatmapChartPoint>(
+      child: Chart<StackedBarData>(
+        key: ValueKey(data),
         data: data,
         variables: {
-          'x': Variable<HeatmapChartPoint, String>(
-            accessor: (point) => point.x,
+          'group': Variable<StackedBarData, String>(
+            accessor: (point) => point.group,
+            scale: OrdinalScale(inflate: true),
           ),
-          'y': Variable<HeatmapChartPoint, String>(
-            accessor: (point) => point.y,
+          'category': Variable<StackedBarData, String>(
+            accessor: (point) => point.category,
+            scale: OrdinalScale(inflate: true),
           ),
-          'value': Variable<HeatmapChartPoint, num>(
+          'value': Variable<StackedBarData, num>(
             accessor: (point) => point.value,
-            scale: LinearScale(min: 0),
+            scale: LinearScale(min: 0, max: 100),
           ),
         },
         marks: [
-          PolygonMark(
+          IntervalMark(
+            position: Varset('group') * Varset('value') / Varset('category'),
             color: ColorEncode(
-              variable: 'value',
-              values: const [
-                Color(0xffdbeafe),
-                Color(0xff38bdf8),
-                Color(0xff1d4ed8),
-              ],
+              variable: 'category',
+              values: Defaults.colors10,
             ),
+            modifiers: [StackModifier()],
           ),
         ],
-        axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
+        coord: RectCoord(transposed: true),
+        axes: [
+          Defaults.horizontalAxis,
+          Defaults.verticalAxis,
+        ],
       ),
     );
   }
 }
 
-class HeatmapChartPoint {
-  final String x;
-  final String y;
+class StackedBarData {
+  final String group;
+  final String category;
   final num value;
 
-  const HeatmapChartPoint({
-    required this.x,
-    required this.y,
+  const StackedBarData({
+    required this.group,
+    required this.category,
     required this.value,
   });
 }

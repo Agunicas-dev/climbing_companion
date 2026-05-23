@@ -5,6 +5,7 @@ class ClimbLogCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final String? selectedGrade;
   final String? selectedCompletion;
+  final List<String> grades;
   final ValueChanged<String?>? onGradeChanged;
   final ValueChanged<String?>? onCompletionChanged;
 
@@ -14,27 +15,36 @@ class ClimbLogCard extends StatelessWidget {
     this.onDelete,
     this.selectedGrade,
     this.selectedCompletion,
+    this.grades = const [
+      'VB',
+      'V0',
+      'V1',
+      'V2',
+      'V3',
+      'V4',
+      'V5',
+      'V6',
+      'V7',
+      'V8',
+      'V9',
+      'V10',
+      'V11',
+      'V12',
+      'V13',
+    ],
     this.onGradeChanged,
     this.onCompletionChanged,
   });
 
-  static const List<String> grades = [
-    'V0',
-    'V1',
-    'V2',
-    'V3',
-    'V4',
-    'V5',
-    'V6',
-    'V7',
-    'V8',
-    'V9',
-    'V10',
-  ];
   static const List<String> completions = ['Sent', 'Failed', 'Flash'];
 
   @override
   Widget build(BuildContext context) {
+    final gradeOptions =
+        selectedGrade != null && !grades.contains(selectedGrade)
+        ? [selectedGrade!, ...grades]
+        : grades;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -54,7 +64,7 @@ class ClimbLogCard extends StatelessWidget {
               DropdownButton<String>(
                 value: selectedGrade,
                 hint: const Text('Grade'),
-                items: grades.map((String value) {
+                items: gradeOptions.map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -75,10 +85,7 @@ class ClimbLogCard extends StatelessWidget {
                 onChanged: onCompletionChanged,
               ),
               const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: onDelete,
-              ),
+              IconButton(icon: const Icon(Icons.close), onPressed: onDelete),
             ],
           ),
         ),
