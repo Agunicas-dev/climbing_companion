@@ -3,41 +3,57 @@ import '../models/session.dart';
 import 'grade_scale_service.dart';
 import 'isar_service.dart';
 
+//Service responsible for calculating various climbing statistics based on the sessions and climbs data stored in Isar.
+//It provides methods to retrieve global statistics across all sessions, as well as specific statistics for individual sessions or sets of climbs.
+
+
 class StatisticsService {
   const StatisticsService._();
+  /*_________________________________________________________________________________________________
+  Section dedicated to calculating global statistics across all sessions using the data stored in Isar.
+  ____________________________________________________________________________________________________*/
 
-  //Global statistics: reads every saved session from Isar.
+  //Reads every saved session from Isar.
   static Future<GlobalClimbingStatistics> getGlobalStatistics() async {
     final sessions = await IsarService.getAllSessions();
     return GlobalClimbingStatistics.fromSessions(sessions);
   }
 
+  //Gets the number of climbs for each session, used for the climbs by session statistic.
   static Future<List<SessionChartPoint>> getGlobalClimbsBySession() async {
     final statistics = await getGlobalStatistics();
     return statistics.climbsBySession;
   }
 
+  //Gets the total duration for each session, used for the duration by session statistic.
   static Future<List<SessionChartPoint>> getGlobalDurationBySession() async {
     final statistics = await getGlobalStatistics();
     return statistics.durationBySession;
   }
 
+  //Gets the grade distribution for all climbs, used for the grade distribution chart.
   static Future<List<CategoryChartPoint>> getGlobalGradeDistribution() async {
     final statistics = await getGlobalStatistics();
     return statistics.gradeDistribution;
   }
 
+  //Gets the completion distribution for all climbs, used for the completion distribution chart.
   static Future<List<CategoryChartPoint>>
   getGlobalCompletionDistribution() async {
     final statistics = await getGlobalStatistics();
     return statistics.completionDistribution;
   }
 
-  //Session statistics: uses only the session or climbs passed to it.
+/*_______________________________________________________________________________________________________________________________________
+  Section dedicated to calculating statistics for a specific session or set of climbs, based on the data of that session or those climbs.
+  ______________________________________________________________________________________________________________________________________*/
+
+  //Getter for loading only the session or climbs passed to it.
   static SessionClimbingStatistics getSessionStatistics(Session session) {
     return SessionClimbingStatistics.fromSession(session);
   }
 
+  //Gets the statistics for a specific set of climbs and then formats the total time of the session to be displayed in the session statistics summary.
   static SessionClimbingStatistics getStatisticsForClimbs({
     required DateTime date,
     required String totalTime,
@@ -51,6 +67,7 @@ class StatisticsService {
     );
   }
 
+  //
   static Duration _durationFromStopwatch(String value) {
     final parts = value.split(':').map(int.tryParse).toList();
     if (parts.length == 3 && parts.every((part) => part != null)) {
@@ -76,8 +93,8 @@ class GlobalClimbingStatistics {
   final List<SessionChartPoint> climbsBySession;
   final List<SessionChartPoint> durationBySession;
   final Duration averageRestTime;
-  final List<HeatmapChartPoint> environmentDisciplineHeatmap;
 
+  //Private constructor to initialize all the statistics fields, used by the factory constructor to create an instance from a list of sessions.
   const GlobalClimbingStatistics._({
     required this.sessions,
     required this.allClimbs,
@@ -90,9 +107,9 @@ class GlobalClimbingStatistics {
     required this.climbsBySession,
     required this.durationBySession,
     required this.averageRestTime,
-    required this.environmentDisciplineHeatmap,
   });
 
+  //Factory constructor to create an instance of GlobalClimbingStatistics from a list of sessions, calculating all the relevant statistics based on the climbs data of those sessions.
   factory GlobalClimbingStatistics.fromSessions(List<Session> sessions) {
     final sortedSessions = [...sessions]
       ..sort((a, b) => a.date.compareTo(b.date));
@@ -118,6 +135,7 @@ class GlobalClimbingStatistics {
       allClimbs.map((climb) => climb.completion),
     );
 
+    //Calculating the success distribution.
     final successCounts = <String, int>{'Sends': 0, 'Flashes': 0, 'Fails': 0};
     for (final climb in allClimbs) {
       final completion = _cleanCategory(climb.completion);
@@ -165,6 +183,7 @@ class GlobalClimbingStatistics {
       }
     }
 
+    //Calculating the climbs by session and duration by session statistics, creating a SessionChartPoint for each session with the relevant data.
     final climbsBySession = immutableSessions.map((session) {
       return SessionChartPoint(
         date: session.date,
@@ -173,6 +192,7 @@ class GlobalClimbingStatistics {
       );
     }).toList();
 
+    //Calculating the duration by session statistic, creating a SessionChartPoint for each session with the total duration of that session in minutes.
     final durationBySession = immutableSessions.map((session) {
       return SessionChartPoint(
         date: session.date,
@@ -182,6 +202,7 @@ class GlobalClimbingStatistics {
       );
     }).toList();
 
+    //Calculating the average rest time between climbs across all sessions, by first calculating the gaps between climbs in each session and then averaging those gaps.
     final gaps = <int>[];
     for (final session in immutableSessions) {
       final climbSeconds =
@@ -199,35 +220,12 @@ class GlobalClimbingStatistics {
         if (gap > 0) gaps.add(gap);
       }
     }
-
     final averageRestTime = gaps.isEmpty
         ? Duration.zero
         : Duration(
           seconds: gaps.fold<int>(0, (total, gap) => total + gap) ~/ gaps.length,
         );
 
-    final heatmapCounts = <String, Map<String, int>>{
-      'Indoor': {'Boulder': 0, 'Lead': 0},
-      'Outdoor': {'Boulder': 0, 'Lead': 0},
-    };
-
-    for (final session in immutableSessions) {
-      final env = session.environmentLabel;
-      final disc = session.disciplineLabel;
-      if (heatmapCounts.containsKey(env) &&
-          heatmapCounts[env]!.containsKey(disc)) {
-        heatmapCounts[env]![disc] = heatmapCounts[env]![disc]! + 1;
-      }
-    }
-
-    final environmentDisciplineHeatmap = <HeatmapChartPoint>[];
-    heatmapCounts.forEach((env, disciplines) {
-      disciplines.forEach((disc, count) {
-        environmentDisciplineHeatmap.add(
-          HeatmapChartPoint(x: disc, y: env, value: count),
-        );
-      });
-    });
 
     return GlobalClimbingStatistics._(
       sessions: immutableSessions,
@@ -241,12 +239,10 @@ class GlobalClimbingStatistics {
       climbsBySession: List<SessionChartPoint>.unmodifiable(climbsBySession),
       durationBySession: List<SessionChartPoint>.unmodifiable(durationBySession),
       averageRestTime: averageRestTime,
-      environmentDisciplineHeatmap: List<HeatmapChartPoint>.unmodifiable(
-        environmentDisciplineHeatmap,
-      ),
     );
   }
 
+  //Calculating some simple statistics per session.
   int get sessionCount => sessions.length;
 
   double get averageClimbsPerSession {
@@ -286,6 +282,8 @@ class GlobalClimbingStatistics {
     );
   }
 
+  //Calculating the flash grade, which is the hardest grade with a flash rate of at least 60%,
+  //by first grouping climbs by grade and then calculating the flash rate for each grade and display the highest.
   String? get flashGrade {
     final climbsByGrade = <String, List<Climb>>{};
     for (final climb in allClimbs) {
@@ -311,6 +309,8 @@ class GlobalClimbingStatistics {
     return highestFlashGrade;
   }
 
+
+  //Calculating the number of months since the first session, used for the sessions timeline statistic to determine how many months to display.
   List<SessionChartPoint> sessionsLastNMonths(int n) {
     final now = DateTime.now();
     final localNow = DateTime(now.year, now.month, now.day);

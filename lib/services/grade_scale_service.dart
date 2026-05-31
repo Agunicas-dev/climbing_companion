@@ -1,6 +1,12 @@
 import 'package:climbing_companion/models/session_type.dart';
 import 'package:climbing_companion/models/settings.dart';
 
+
+/*Service responsible for managing the grading systems used in the app, including the Hueco (V-Scale) and Font
+(Fontainebleau) systems. It provides functions to get the appropriate grading system based on user settings and
+session discipline, as well as utility functions to normalize system names and calculate grade ranks for sorting purposes.*/
+
+
 class GradeScaleService {
   const GradeScaleService._();
 
@@ -26,8 +32,8 @@ class GradeScaleService {
   ];
 
   static const List<String> fontGrades = [
-    '3 - 4',
-    '4 - 5',
+    '3',
+    '4',
     '5',
     '5+',
     '6A / 6A+',
@@ -45,6 +51,7 @@ class GradeScaleService {
 
   static const List<String> supportedSystems = [hueco, font];
 
+  //Returns a user-friendly label for the specified grading system, used in the UI to display the current system.
   static String labelForSystem(String system) {
     return switch (normalizeSystem(system)) {
       font => 'Font',
@@ -52,6 +59,7 @@ class GradeScaleService {
     };
   }
 
+  //Normalizes the grading system name to a standard format for internal use, allowing for flexible user input.
   static String normalizeSystem(String system) {
     final normalized = system.trim().toLowerCase();
     return switch (normalized) {
@@ -60,6 +68,7 @@ class GradeScaleService {
     };
   }
 
+  //Determines the appropriate grading system to use based on user settings and the discipline of the climbing session.
   static String systemForDiscipline({
     required Settings settings,
     required SessionDiscipline discipline,
@@ -74,6 +83,7 @@ class GradeScaleService {
     };
   }
 
+  //Returns the appropriate list of grades based on the specified grading system.
   static List<String> gradesForSystem(String system) {
     return switch (normalizeSystem(system)) {
       font => fontGrades,
@@ -81,6 +91,7 @@ class GradeScaleService {
     };
   }
 
+  //Utility function to get a numeric rank for a given grade, used for sorting sessions by grade.
   static int gradeRank(String grade) {
     final normalizedGrade = grade.trim().toUpperCase();
     final huecoIndex = huecoGrades

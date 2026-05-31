@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-//Basic theme definition.
+/*Service in charge of building the themes for the app based on the user's settings, including theme mode,
+font size and seed color. It also includes utility functions to convert between color formats and to get the ThemeMode from a string representation.*/
 class ThemeService {
   static ThemeData buildTheme(
     Brightness brightness,
@@ -14,6 +15,8 @@ class ThemeService {
         ? 1.18
         : 1.0;
 
+    /*Build the ThemeData using Material 3, with a color scheme generated from the seed color and brightness,
+    and a text theme that applies the font size multiplier to all text styles.*/
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -57,6 +60,8 @@ class ThemeService {
     );
   }
 
+  //Function to get the ThemeMode from a string representation, used when
+  //loading the settings to apply the correct theme mode based on the user's preference.
   static ThemeMode themeModeFromString(String themeName) {
     switch (themeName) {
       case 'light':
@@ -68,6 +73,7 @@ class ThemeService {
     }
   }
 
+  //Function to convert a hex color string to a Color object, used when loading the seed color from the settings to apply it to the theme.
   static Color seedColorFromHex(String hexColor) {
     final buffer = StringBuffer();
     var value = hexColor.trim();
@@ -80,7 +86,7 @@ class ThemeService {
     buffer.write(value);
     return Color(int.parse(buffer.toString(), radix: 16));
   }
-
+  //Function to convert a Color object to a hex color string, used when saving the seed color to the settings.
   static String colorToHex(Color color) {
     final value = color.toARGB32();
     final r = ((value >> 16) & 0xFF).toRadixString(16).padLeft(2, '0');

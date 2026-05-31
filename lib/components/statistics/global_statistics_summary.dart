@@ -1,12 +1,15 @@
-import 'package:climbing_companion/components/statistics/statistics_summary_grid.dart';
+import 'package:climbing_companion/components/statistics_grid.dart';
 import 'package:climbing_companion/services/statistics_service.dart';
 import 'package:flutter/material.dart';
 
+
+//Widget to display a summary of global climbing statistics in a grid format using the StatisticsSummaryGrid component and StatisticsService data.
 class GlobalStatisticsSummary extends StatelessWidget {
   final GlobalClimbingStatistics statistics;
 
   const GlobalStatisticsSummary({super.key, required this.statistics});
 
+  //Method or function to format the duration of the average rest time calculation into a more readable string.
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds.remainder(60);
@@ -14,6 +17,9 @@ class GlobalStatisticsSummary extends StatelessWidget {
     return '${minutes}m ${seconds}s';
   }
 
+
+  /*Method to build the widget for the global statistics summary, creating a list of items
+  and calling the StatisticsSummaryGrid component to display them in a grid.*/
   @override
   Widget build(BuildContext context) {
     final tiles = [

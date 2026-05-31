@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+// A widget that displays the user's profile picture in a circular avatar. It checks if a custom
+//profile picture path is provided and valid.
+//It should change the default avatar image based on the current theme (light or dark) for better visibility, ensuring a consistent look across themes.
+
 class ProfileAvatar extends StatelessWidget {
   final String? profilePicturePath;
   final double radius;

@@ -2,7 +2,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/settings.dart';
 import 'grade_scale_service.dart';
 
+/*Service in charge of loading and saving the user settings using SharedPreferences.
+It provides two static methods: loadSettings and saveSettings, which handle the retrieval and storage of the settings data, respectively.*/
+
 class SettingsService {
+  //Keys for SharedPreferences storage.
   static const _keyUsername = 'settings_username';
   static const _keyBio = 'settings_bio';
   static const _keyLocation = 'settings_location';
@@ -19,6 +23,8 @@ class SettingsService {
   static const _keyFontSize = 'settings_font_size';
   static const _keySeedColor = 'settings_seed_color';
 
+  
+  //Function to load the settings from SharedPreferences, returning a Settings object with the retrieved values or default values if not set.
   static Future<Settings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     return Settings(
@@ -42,6 +48,8 @@ class SettingsService {
     );
   }
 
+
+  //Function to save the settings to SharedPreferences, taking a Settings object as input and storing its values using the defined keys.
   static Future<void> saveSettings(Settings s) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyUsername, s.username);

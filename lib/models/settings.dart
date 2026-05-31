@@ -1,19 +1,22 @@
+//Model class for user settings.
+
 class Settings {
   String username;
   String bio;
   String location;
-  String profilePicturePath; // local file path to profile picture
+  String profilePicturePath; //file path for the profile picture
   bool likesBouldering;
   bool likesLead;
-  String gradingSystem; // 'hueco' or 'font'
+  String gradingSystem; //"hueco" or "font"
   bool useDisciplineGradeSystems;
-  String units; // 'metric' or 'imperial'
-  String language; // e.g., 'en', 'es'
+  String units; //"metric" or "imperial"
+  String language;
+  String theme; //"system","light","dark"
+  String fontSize;
+  String seedColor; //hex color string for theme seed color
   bool notifications;
-  String theme; // 'system','light','dark'
-  String fontSize; // 'small','medium','large'
-  String seedColor; // hex color string for theme seed color
 
+  //Constructor with default values for all fields.
   Settings({
     this.username = '',
     this.bio = '',
@@ -25,12 +28,14 @@ class Settings {
     this.useDisciplineGradeSystems = false,
     this.units = 'metric',
     this.language = 'en',
-    this.notifications = true,
     this.theme = 'system',
     this.fontSize = 'medium',
     this.seedColor = '#81D4FA',
+    this.notifications = true,
   });
 
+
+  //Convert the settings to a map for storage in SharedPreferences or Isar.
   Map<String, Object> toMap() {
     return {
       'username': username,
@@ -43,13 +48,14 @@ class Settings {
       'useDisciplineGradeSystems': useDisciplineGradeSystems,
       'units': units,
       'language': language,
-      'notifications': notifications,
       'theme': theme,
       'fontSize': fontSize,
       'seedColor': seedColor,
+      'notifications': notifications,
     };
   }
 
+  //Create a Settings object from a map retrieved from SharedPreferences or Isar.
   factory Settings.fromMap(Map<String, Object?> map) {
     return Settings(
       username: (map['username'] as String?) ?? '',
@@ -63,10 +69,10 @@ class Settings {
           (map['useDisciplineGradeSystems'] as bool?) ?? false,
       units: (map['units'] as String?) ?? 'metric',
       language: (map['language'] as String?) ?? 'en',
-      notifications: (map['notifications'] as bool?) ?? true,
       theme: (map['theme'] as String?) ?? 'system',
       fontSize: (map['fontSize'] as String?) ?? 'medium',
       seedColor: (map['seedColor'] as String?) ?? '#81D4FA',
+      notifications: (map['notifications'] as bool?) ?? true,
     );
   }
 }

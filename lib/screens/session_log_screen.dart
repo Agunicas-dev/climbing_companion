@@ -2,7 +2,7 @@
 import 'package:climbing_companion/components/climb_list_session.dart';
 import 'package:climbing_companion/components/clock.dart';
 import 'package:climbing_companion/models/session_type.dart';
-import 'package:climbing_companion/screens/climbing_log_screen.dart';
+import 'package:climbing_companion/screens/session_review_screen.dart';
 import 'package:climbing_companion/services/isar_service.dart';
 import 'package:climbing_companion/models/climb.dart' as model_climb;
 import 'package:flutter/material.dart';
@@ -135,7 +135,7 @@ class _SessionLogScreenState extends State<SessionLogScreen> {
                   // Replace current screen with the log details screen
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => ClimbingLog(session: session),
+                      builder: (context) => SessionReviewScreen(session: session),
                     ),
                   );
                 },

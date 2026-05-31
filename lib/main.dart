@@ -22,7 +22,9 @@ class MainApp extends StatefulWidget {
   @override
   State<MainApp> createState() => _MainAppState();
 }
-
+//The main app widget that sets up the overall structure of the application, including theme management and navigation
+//between the home and logs screens. It listens for changes in theme settings and updates the app's theme accordingly.
+//The floating action button is used to start a new climbing session by showing a dialog to select the session type and then navigating to the session log screen.
 class _MainAppState extends State<MainApp> {
   late ThemeData _lightTheme;
   late ThemeData _darkTheme;
@@ -50,6 +52,7 @@ class _MainAppState extends State<MainApp> {
     seedColorNotifier.addListener(_onThemeChanged);
   }
 
+  //Function to load the theme settings from the SettingsService and build the light and dark themes based on those settings.
   Future<void> _loadTheme() async {
     final settings = await SettingsService.loadSettings();
     _seedColor = settings.seedColor;
@@ -74,6 +77,7 @@ class _MainAppState extends State<MainApp> {
       });
     }
   }
+
 
   //Handling theme changes by rebuilding the light and dark themes based on the new settings and updating the theme mode.
   void _onThemeChanged() {
@@ -104,6 +108,9 @@ class _MainAppState extends State<MainApp> {
     super.dispose();
   }
 
+
+  //Function to handle starting a new climbing session. It shows a dialog calling SessionTypeDialog component to select the
+  //session type and then navigates to the session log screen for that session type.
   Future<void> logNewSession(BuildContext context) async {
     final sessionType = await showDialog<SessionType>(
       context: context,
@@ -128,6 +135,7 @@ class _MainAppState extends State<MainApp> {
       );
     }
 
+    //Once the theme is loaded, return the MaterialApp with the appropriate theme and navigation structure.
     return MaterialApp(
       //Theme data.
       theme: _lightTheme,

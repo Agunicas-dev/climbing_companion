@@ -1,5 +1,5 @@
 /*
-  This screen is used to review a climbing log session entry.
+  This screen is used to review a session entry on the database.
   It shows the session date, total time, and the list of climbs recorded for that session.
 */
 
@@ -12,16 +12,17 @@ import '../components/statistics/session_statistics_summary.dart';
 import '../models/session.dart';
 import '../services/statistics_service.dart';
 
-class ClimbingLog extends StatefulWidget {
+//Constructor for the session review screen, which takes a Session object as a parameter and displays its details and statistics.
+class SessionReviewScreen extends StatefulWidget {
   final Session session;
 
-  const ClimbingLog({super.key, required this.session});
+  const SessionReviewScreen({super.key, required this.session});
 
   @override
-  State<ClimbingLog> createState() => _ClimbingLogState();
+  State<SessionReviewScreen> createState() => _SessionReviewScreenState();
 }
 
-class _ClimbingLogState extends State<ClimbingLog> {
+class _SessionReviewScreenState extends State<SessionReviewScreen> {
   final ScrollController _climbsScrollController = ScrollController();
 
   @override
@@ -30,6 +31,7 @@ class _ClimbingLogState extends State<ClimbingLog> {
     super.dispose();
   }
 
+  //Method to confirm the deletion of a session, showing a dialog to the user and deleting the session from the database if confirmed.
   Future<void> _confirmDeletion(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -58,6 +60,7 @@ class _ClimbingLogState extends State<ClimbingLog> {
     }
   }
 
+  //Method to format the session date into a readable string format.
   String _formatSessionDate(DateTime date) {
     final local = date.toLocal();
     final year = local.year.toString().padLeft(4, '0');
@@ -87,6 +90,8 @@ class _ClimbingLogState extends State<ClimbingLog> {
       //Layout builder used to contain the climbs list to a percentage of the screen height, allowing for better use of space and a more balanced layout.
       body: LayoutBuilder(
         builder: (context, constraints) {
+          //Calculating the statistics for the session using the StatisticsService and determining the heights for the climbs list and charts based on the available screen height.
+          //The part for the height calculation is thanks to the help of copilot because i had no idea how to do it but some things were off in proportions.
           final statistics = StatisticsService.getSessionStatistics(
             widget.session,
           );
@@ -129,9 +134,13 @@ class _ClimbingLogState extends State<ClimbingLog> {
                       Chip(label: Text(widget.session.disciplineLabel)),
                     ],
                   ),
+
+                  //Section used to show the session statistics.
                   const SizedBox(height: 16),
                   SessionStatisticsSummary(statistics: statistics),
                   const SizedBox(height: 16),
+
+                  //Section used to show the list of climbs for the session.
                   const Text(
                     'Climbs',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -147,7 +156,11 @@ class _ClimbingLogState extends State<ClimbingLog> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: widget.session.climbs.isEmpty
+                      child:
+                      
+                      //If there are no climbs, show a message. Otherwise, show the list of climbs using a
+                      //ListView and displaying the time, grade and completion status for each climb.
+                      widget.session.climbs.isEmpty
                           ? const Center(
                               child: Text(
                                 'No climbs recorded for this session.',
@@ -208,7 +221,7 @@ class _ClimbingLogState extends State<ClimbingLog> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  climb.grade ?? 'Unknown',
+                                                  climb.grade ?? 'Unknown',//If grade is null, show 'Unknown'.
                                                   style: const TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w600,
@@ -216,7 +229,7 @@ class _ClimbingLogState extends State<ClimbingLog> {
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  climb.completion ?? 'Unknown',
+                                                  climb.completion ?? 'Unknown',//If completion status is null, show 'Unknown'.
                                                   style: TextStyle(
                                                     color: Theme.of(context)
                                                         .textTheme
@@ -237,6 +250,9 @@ class _ClimbingLogState extends State<ClimbingLog> {
                             ),
                     ),
                   ),
+
+                  /*Show the statistics charts for the session, including grade distribution,
+                  outcomes by grade and completion distribution, using the calculated statistics from the StatisticsService.*/
                   const SizedBox(height: 16),
                   ClimbingHorizontalBarChart(
                     title: 'Grade distribution',

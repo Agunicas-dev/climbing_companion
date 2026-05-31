@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+// A simple badge widget to indicate climbing disciplines (bouldering or lead). It is used in the profile card and
+//session review screens to visually represent the user's preferences and session types.
+//The badge adapts its icon based on the current theme (light or dark) for better visibility.
+
+
 enum DisciplineBadgeType { bouldering, lead }
 
 class DisciplineBadge extends StatelessWidget {

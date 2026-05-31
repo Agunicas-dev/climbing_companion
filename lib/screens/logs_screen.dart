@@ -2,7 +2,7 @@ import 'package:climbing_companion/services/isar_service.dart';
 import 'package:flutter/material.dart';
 
 import '../models/session.dart';
-import 'climbing_log_screen.dart';
+import 'session_review_screen.dart';
 
 class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
@@ -75,7 +75,9 @@ class _LogsScreenState extends State<LogsScreen> {
             );
           }
 
-          //Listview for the sessions, showing the date, total time, and number of climbs for each session.
+          /*Listview for the sessions, showing the date, total time, number of climbs for each session
+          and an icon representing the discipline of the session. Tapping on a session will navigate to the
+          SessionReviewScreen to see the details of that session.*/
           return ListView.separated(
             padding: const EdgeInsets.all(16),
 
@@ -131,7 +133,7 @@ class _LogsScreenState extends State<LogsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ClimbingLog(session: session),
+                        builder: (context) => SessionReviewScreen(session: session),
                       ),
                     ).then((_) {
                       if (mounted) {

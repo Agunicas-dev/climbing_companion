@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+//A card widget that represents a single climb log entry. It displays the time of the climb,
+//allows the user to select the grade and completion status, and provides a delete button to remove the log entry.
+//The grade dropdown includes all standard bouldering grades, and if a non-standard grade is selected, it
+//is added to the top of the dropdown list for easy access. The completion dropdown includes options for "Sent",
+//"Failed", and "Flash". This widget is used in the session review screen to display and edit individual climb logs.
+
 class ClimbLogCard extends StatelessWidget {
   final String time;
   final VoidCallback? onDelete;
